@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ 極值判斷教學 (Max Value Hunter)</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 自定義動畫類別 */
+        .highlight-line {
+            background-color: rgba(234, 179, 8, 0.3); /* yellow-500/30 */
+            color: #fef08a; /* yellow-200 */
+            font-weight: bold;
+            border-left: 4px solid #facc15; /* yellow-400 */
+        }
+        .normal-line {
+            border-left: 4px solid transparent;
+        }
+        .normal-line:hover {
+            background-color: #1e293b; /* slate-800 */
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Header -->
+        <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-8 h-8 text-yellow-500"></i>
+                    C++ 極值判斷教學 (HTML版)
+                </h1>
+                <p class="text-slate-500 text-sm mt-1">
+                    目標：在不使用陣列儲存所有數字的情況下，找出輸入序列中的最大值。
+                </p>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex items-center gap-3 bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex-wrap">
+                <div class="flex items-center gap-2 px-2 border-r border-slate-200 pr-4">
+                    <span class="text-sm font-medium text-slate-600">數量 N:</span>
+                    <input type="number" id="input-n" min="3" max="20" value="5" class="w-16 p-1 border rounded text-center">
+                    <button id="btn-random" class="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-600">重新隨機</button>
+                </div>
+                
+                <button id="btn-reset" class="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors" title="重置">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                </button>
+                
+                <button id="btn-play" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700">
+                    <i data-lucide="play" class="w-4 h-4"></i> <span id="btn-play-text">自動播放</span>
+                </button>
+                
+                <button id="btn-next" class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-medium disabled:opacity-50">
+                    <i data-lucide="step-forward" class="w-4 h-4"></i> 下一步
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                
+                <!-- Status Bar -->
+                <div id="status-bar" class="p-4 rounded-lg border-l-4 shadow-sm min-h-[80px] flex items-center bg-blue-50 border-blue-500 text-blue-800 transition-colors duration-300">
+                    <span id="status-prefix" class="font-bold mr-2 text-lg">步驟說明:</span>
+                    <span id="status-text" class="text-lg">準備開始... 請點擊「下一步」或「自動播放」</span>
+                </div>
+
+                <!-- Variables Area -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                    
+                    <h3 class="text-slate-400 font-bold mb-6 text-sm flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        電腦記憶體 (RAM) 模擬
+                    </h3>
+
+                    <div class="flex justify-center items-end gap-8 md:gap-12 mb-8">
+                        
+                        <!-- Current Value Box -->
+                        <div class="relative flex flex-col items-center group transition-transform duration-300" id="box-current-container">
+                             <div id="anim-read" class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-blue-500 animate-bounce font-bold opacity-0 transition-opacity">讀入!</div>
+                            <span class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">current_val</span>
+                            <div id="box-current" class="w-24 h-24 bg-white border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center shadow-sm relative overflow-hidden transition-all duration-300">
+                                <div class="absolute top-1 right-2 text-[10px] text-slate-400">當前輸入</div>
+                                <span id="val-current" class="text-3xl font-bold text-slate-800">?</span>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Operator -->
+                        <div class="flex flex-col items-center justify-center pb-8 w-16 h-24">
+                            <div id="compare-result" class="hidden flex-col items-center transform scale-125 transition-all">
+                                <!-- JS will inject icon here -->
+                            </div>
+                            <span id="compare-placeholder" class="text-4xl text-slate-300 font-bold opacity-0">?</span>
+                        </div>
+
+                        <!-- Max Value Box -->
+                        <div class="relative flex flex-col items-center transition-transform duration-300" id="box-max-container">
+                            <div id="anim-update" class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-green-600 animate-bounce font-bold whitespace-nowrap opacity-0 transition-opacity">更新霸主!</div>
+                            <span class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">max_val</span>
+                            <div id="box-max" class="w-24 h-24 bg-white border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center shadow-sm relative overflow-hidden transition-all duration-300">
+                                <div class="absolute top-1 right-2 text-[10px] text-slate-400">目前最大</div>
+                                <span id="val-max" class="text-3xl font-bold text-slate-800">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loop Counter & Queue -->
+                    <div class="border-t border-slate-100 pt-4 flex flex-col md:flex-row justify-between items-start md:items-center text-slate-500 text-sm gap-2">
+                        <div class="flex items-center w-full md:w-auto overflow-hidden">
+                            <span class="mr-2 whitespace-nowrap">輸入流:</span>
+                            <div id="queue-container" class="flex items-center space-x-2 h-12 bg-slate-100 rounded px-2 overflow-hidden border border-slate-200 flex-1">
+                                <!-- Queue items injected by JS -->
+                            </div>
+                        </div>
+                        <div class="flex flex-row md:flex-col justify-between w-full md:w-auto md:items-end">
+                            <span>i: <span id="val-i" class="font-mono font-bold text-slate-800">-</span></span>
+                            <span id="val-progress">進度: 0/5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Concept Note -->
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-yellow-800 text-sm">
+                    <h4 class="font-bold flex items-center gap-2 mb-1">
+                        <span class="bg-yellow-200 text-yellow-800 rounded px-1.5 py-0.5 text-xs">觀念重點</span>
+                        為什麼不需要陣列？
+                    </h4>
+                    <p>
+                        我們只需要知道「目前為止看過的最大數字」。當新的數字進來(current_val)，如果它比最大值(max_val)還小，我們就丟棄它；如果比較大，它就取代成為新的最大值。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code -->
+            <div class="relative">
+                <div class="sticky top-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-700">C++ 原始碼</h3>
+                        <span class="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded">main.cpp</span>
+                    </div>
+                    
+                    <div id="code-block" class="bg-slate-900 text-slate-100 p-4 rounded-lg font-mono text-sm shadow-inner overflow-x-auto">
+                        <!-- Code lines injected by JS -->
+                    </div>
+                    
+                    <!-- Legend -->
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-yellow-500/30 border border-yellow-400 rounded"></div>
+                            <span>當前執行行數</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 bg-green-50 border border-green-400 rounded"></div>
+                            <span>變數更新</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // C++ Code Data
+        const codeLines = [
+            { line: 1, text: "int main() {" },
+            { line: 2, text: "    int n; cin >> n; // 輸入數量" },
+            { line: 3, text: "    int max_val = 0; // 假設初始最大值為 0" },
+            { line: 4, text: "    int current_val;" },
+            { line: 5, text: "" },
+            { line: 6, text: "    for (int i = 0; i < n; i++) { // 迴圈開始" },
+            { line: 7, text: "        cin >> current_val; // 輸入下一個數字" },
+            { line: 8, text: "        if (current_val > max_val) { // 挑戰者 vs 霸主" },
+            { line: 9, text: "            max_val = current_val; // 挑戰成功！更新" },
+            { line: 10, text: "        }" },
+            { line: 11, text: "    }" },
+            { line: 12, text: "    cout << max_val; // 輸出最終結果" },
+            { line: 13, text: "    return 0;" },
+            { line: 14, text: "}" },
+        ];
+
+        // State
+        let state = {
+            n: 5,
+            inputs: [],
+            isPlaying: false,
+            activeLine: 0,
+            maxVal: 0,
+            currentVal: null,
+            loopI: -1,
+            processedCount: 0,
+            comparisonResult: null, // true, false, or null
+            timer: null
+        };
+
+        // DOM Elements
+        const els = {
+            codeBlock: document.getElementById('code-block'),
+            inputN: document.getElementById('input-n'),
+            btnRandom: document.getElementById('btn-random'),
+            btnReset: document.getElementById('btn-reset'),
+            btnPlay: document.getElementById('btn-play'),
+            btnPlayText: document.getElementById('btn-play-text'),
+            btnPlayIcon: document.querySelector('#btn-play i'),
+            btnNext: document.getElementById('btn-next'),
+            statusText: document.getElementById('status-text'),
+            statusBar: document.getElementById('status-bar'),
+            valMax: document.getElementById('val-max'),
+            valCurrent: document.getElementById('val-current'),
+            valI: document.getElementById('val-i'),
+            valProgress: document.getElementById('val-progress'),
+            boxMax: document.getElementById('box-max'),
+            boxCurrent: document.getElementById('box-current'),
+            boxMaxContainer: document.getElementById('box-max-container'),
+            boxCurrentContainer: document.getElementById('box-current-container'),
+            animRead: document.getElementById('anim-read'),
+            animUpdate: document.getElementById('anim-update'),
+            compareResult: document.getElementById('compare-result'),
+            comparePlaceholder: document.getElementById('compare-placeholder'),
+            queueContainer: document.getElementById('queue-container')
+        };
+
+        // Initialize Code View
+        function initCodeView() {
+            els.codeBlock.innerHTML = codeLines.map(item => `
+                <div id="line-${item.line}" class="flex items-center px-2 py-0.5 rounded transition-colors duration-200 normal-line">
+                    <span class="w-8 text-slate-500 select-none text-right mr-4">${item.line}</span>
+                    <span class="whitespace-pre">${item.text}</span>
+                </div>
+            `).join('');
+        }
+
+        // Logic Helpers
+        function generateInputs() {
+            state.n = parseInt(els.inputN.value) || 5;
+            state.inputs = Array.from({ length: state.n }, () => Math.floor(Math.random() * 99) + 1);
+            resetSimulation();
+        }
+
+        function resetSimulation() {
+            stopPlay();
+            state.activeLine = 0;
+            state.maxVal = 0;
+            state.currentVal = null;
+            state.loopI = -1;
+            state.processedCount = 0;
+            state.comparisonResult = null;
+            render();
+            updateStatus("準備開始... 請點擊「下一步」或「自動播放」", "neutral");
+        }
+
+        function togglePlay() {
+            if (state.isPlaying) {
+                stopPlay();
+            } else {
+                startPlay();
+            }
+        }
+
+        function startPlay() {
+            if (state.activeLine === 12) return;
+            state.isPlaying = true;
+            els.btnPlay.classList.replace('bg-blue-600', 'bg-red-100');
+            els.btnPlay.classList.replace('text-white', 'text-red-600');
+            els.btnPlay.classList.replace('hover:bg-blue-700', 'hover:bg-red-200');
+            els.btnPlayText.innerText = "暫停";
+            els.btnPlayIcon.setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
+            
+            disableControls(true);
+            
+            // Execute once immediately then interval
+            state.timer = setInterval(nextStep, 1500);
+        }
+
+        function stopPlay() {
+            state.isPlaying = false;
+            clearInterval(state.timer);
+            els.btnPlay.classList.replace('bg-red-100', 'bg-blue-600');
+            els.btnPlay.classList.replace('text-red-600', 'text-white');
+            els.btnPlay.classList.replace('hover:bg-red-200', 'hover:bg-blue-700');
+            els.btnPlayText.innerText = "自動播放";
+            els.btnPlayIcon.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+            
+            disableControls(false);
+        }
+
+        function disableControls(disabled) {
+            els.inputN.disabled = disabled;
+            els.btnRandom.disabled = disabled;
+            els.btnNext.disabled = disabled;
+        }
+
+        // Core Step Logic
+        function nextStep() {
+            const line = state.activeLine;
+            
+            if (line === 0) {
+                setState({ activeLine: 2 });
+                updateStatus(`程式開始：讀取 n = ${state.n}`, "neutral");
+            } 
+            else if (line === 2) {
+                setState({ activeLine: 3, maxVal: 0 });
+                updateStatus("初始化：max_val = 0 (目前最大值)", "neutral");
+            } 
+            else if (line === 3) {
+                setState({ activeLine: 6, loopI: 0 });
+                updateStatus(`迴圈開始：i = 0，準備讀取第 1 個數字`, "neutral");
+            } 
+            else if (line === 6) {
+                if (state.loopI < state.n) {
+                    const val = state.inputs[state.loopI];
+                    setState({ activeLine: 7, currentVal: val });
+                    updateStatus(`輸入：讀取到數字 ${val}，存入 current_val`, "active");
+                } else {
+                    setState({ activeLine: 12 });
+                    updateStatus(`迴圈結束。輸出最終最大值：${state.maxVal}`, "success");
+                    stopPlay();
+                    els.btnPlay.classList.add('opacity-50', 'cursor-not-allowed'); // Disable play button visually
+                }
+            } 
+            else if (line === 7) {
+                const isGreater = state.currentVal > state.maxVal;
+                setState({ activeLine: 8, comparisonResult: isGreater });
+                const resultText = isGreater ? "是的！(True)" : "不是。(False)";
+                updateStatus(`判斷：${state.currentVal} > ${state.maxVal} 嗎？ ${resultText}`, isGreater ? "success" : "fail");
+            } 
+            else if (line === 8) {
+                if (state.comparisonResult) {
+                    setState({ activeLine: 9, maxVal: state.currentVal });
+                    updateStatus(`更新：發現更大的數！max_val 更新為 ${state.currentVal}`, "success");
+                } else {
+                    setState({ activeLine: 10 });
+                    updateStatus(`忽略：${state.currentVal} 沒有比 ${state.maxVal} 大`, "fail");
+                }
+            } 
+            else if (line === 9) {
+                setState({ activeLine: 10 });
+                updateStatus("完成更新，準備進入下一次迴圈", "neutral");
+            } 
+            else if (line === 10) {
+                setState({ activeLine: 11 });
+                updateStatus("迴圈底部", "neutral");
+            } 
+            else if (line === 11) {
+                setState({ 
+                    loopI: state.loopI + 1, 
+                    processedCount: state.processedCount + 1,
+                    comparisonResult: null, 
+                    currentVal: null,
+                    activeLine: 6 
+                });
+                updateStatus(`i 增加為 ${state.loopI + 1}，檢查迴圈條件...`, "neutral");
+            }
+            
+            render();
+        }
+
+        // Update helper
+        function setState(newState) {
+            state = { ...state, ...newState };
+        }
+
+        function updateStatus(msg, type) {
+            els.statusText.innerText = msg;
+            
+            // Colors
+            els.statusBar.className = "p-4 rounded-lg border-l-4 shadow-sm min-h-[80px] flex items-center transition-colors duration-300";
+            if (type === 'success') {
+                els.statusBar.classList.add('bg-green-50', 'border-green-500', 'text-green-800');
+            } else if (type === 'fail') {
+                els.statusBar.classList.add('bg-red-50', 'border-red-400', 'text-red-800');
+            } else if (type === 'active') {
+                els.statusBar.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-800');
+            } else {
+                els.statusBar.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-800'); // Default
+            }
+        }
+
+        // Render UI
+        function render() {
+            // 1. Highlight Code
+            document.querySelectorAll('#code-block > div').forEach(el => {
+                el.className = "flex items-center px-2 py-0.5 rounded transition-colors duration-200 normal-line";
+            });
+            const activeEl = document.getElementById(`line-${state.activeLine}`);
+            if (activeEl) activeEl.className = "flex items-center px-2 py-0.5 rounded transition-colors duration-200 highlight-line";
+
+            // 2. Update Values
+            els.valMax.innerText = state.maxVal;
+            els.valCurrent.innerText = state.currentVal !== null ? state.currentVal : '?';
+            els.valI.innerText = state.loopI === -1 ? '-' : state.loopI;
+            els.valProgress.innerText = `進度: ${Math.max(0, state.loopI)}/${state.n}`;
+
+            // 3. Queue Visualization
+            const remaining = state.inputs.slice(state.processedCount);
+            const visible = remaining.slice(0, 5);
+            let queueHtml = visible.map(num => `
+                <div class="min-w-[32px] h-8 bg-slate-200 rounded flex items-center justify-center text-slate-600 font-mono text-xs border border-slate-300 shadow-sm fade-in">
+                    ${num}
+                </div>
+            `).join('');
+            if (remaining.length > 5) queueHtml += `<span class="text-slate-400 text-xs">...</span>`;
+            if (remaining.length === 0) queueHtml += `<span class="text-slate-400 text-xs italic">無更多輸入</span>`;
+            els.queueContainer.innerHTML = queueHtml;
+
+            // 4. Visual Styles (Colors & Animations)
+            
+            // Current Val Box Style
+            if (state.activeLine === 7) {
+                els.boxCurrent.classList.add('border-blue-400', 'shadow-[0_0_10px_rgba(59,130,246,0.5)]');
+                els.boxCurrentContainer.classList.add('scale-110');
+                els.animRead.style.opacity = '1';
+            } else {
+                els.boxCurrent.classList.remove('border-blue-400', 'shadow-[0_0_10px_rgba(59,130,246,0.5)]');
+                els.boxCurrentContainer.classList.remove('scale-110');
+                els.animRead.style.opacity = '0';
+            }
+
+            // Max Val Box Style
+            if (state.activeLine === 9) {
+                els.boxMax.classList.replace('bg-white', 'bg-green-50');
+                els.boxMax.classList.replace('border-slate-200', 'border-green-400');
+                els.boxMax.querySelector('span').classList.replace('text-slate-800', 'text-green-700');
+                els.boxMaxContainer.classList.add('scale-110');
+                els.animUpdate.style.opacity = '1';
+            } else {
+                els.boxMax.className = "w-24 h-24 bg-white border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center shadow-sm relative overflow-hidden transition-all duration-300";
+                els.boxMax.querySelector('span').className = "text-3xl font-bold text-slate-800";
+                els.boxMaxContainer.classList.remove('scale-110');
+                els.animUpdate.style.opacity = '0';
+            }
+            if (state.activeLine === 12) { // Finish highlight
+                els.boxMax.classList.replace('bg-white', 'bg-yellow-50');
+                els.boxMax.classList.replace('border-slate-200', 'border-yellow-400');
+            }
+
+            // Comparison Visual
+            if (state.activeLine === 8) {
+                els.comparePlaceholder.classList.add('hidden');
+                els.compareResult.classList.remove('hidden');
+                
+                if (state.comparisonResult === null) {
+                    els.comparePlaceholder.classList.remove('hidden');
+                    els.comparePlaceholder.style.opacity = '1';
+                    els.compareResult.classList.add('hidden');
+                } else if (state.comparisonResult === true) {
+                    els.compareResult.innerHTML = `<span class="text-4xl text-green-500">&gt;</span><i data-lucide="check-circle-2" class="text-green-500 w-6 h-6 mt-1"></i>`;
+                } else {
+                    els.compareResult.innerHTML = `<span class="text-4xl text-red-400">&le;</span><i data-lucide="x-circle" class="text-red-400 w-6 h-6 mt-1"></i>`;
+                }
+                lucide.createIcons();
+            } else {
+                els.compareResult.classList.add('hidden');
+                els.comparePlaceholder.classList.remove('hidden');
+                els.comparePlaceholder.style.opacity = state.activeLine > 6 && state.activeLine < 11 ? '0.3' : '0';
+            }
+        }
+
+        // Event Listeners
+        els.btnRandom.addEventListener('click', generateInputs);
+        els.btnReset.addEventListener('click', generateInputs);
+        els.btnPlay.addEventListener('click', togglePlay);
+        els.btnNext.addEventListener('click', nextStep);
+        els.inputN.addEventListener('change', generateInputs);
+
+        // Init
+        initCodeView();
+        generateInputs();
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>
