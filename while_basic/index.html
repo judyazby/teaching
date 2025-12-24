@@ -36,111 +36,32 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8 font-sans">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
-                    <i data-lucide="repeat" class="w-8 h-8"></i>
-                    C++ While 迴圈視覺化
-                </h1>
-                <p class="text-slate-500 text-sm mt-1">觀察變數 i 如何控制迴圈的執行次數與輸出</p>
-            </div>
-
-            <!-- Controls -->
-            <div class="flex flex-wrap items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center gap-2 px-3 border-r border-slate-200">
-                    <div class="flex flex-col text-xs text-slate-500">
-                        <label>條件 (N)</label>
-                        <input type="number" id="input-limit" value="5" min="1" max="20" class="w-12 border rounded px-1 text-slate-800 font-bold">
-                    </div>
-                    <div class="flex flex-col text-xs text-slate-500">
-                        <label>初始 (i)</label>
-                        <input type="number" id="input-init" value="0" min="0" max="10" class="w-12 border rounded px-1 text-slate-800 font-bold">
-                    </div>
-                     <div class="flex flex-col text-xs text-slate-500">
-                        <label>增量 (+)</label>
-                        <input type="number" id="input-step" value="1" min="1" max="5" class="w-12 border rounded px-1 text-slate-800 font-bold">
-                    </div>
-                    <button id="btn-reset" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1 rounded text-xs ml-2">重置參數</button>
-                </div>
-                
-                <button id="btn-play" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors">
-                    <i data-lucide="play" class="w-4 h-4"></i> 自動執行
-                </button>
-                <button id="btn-next" class="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-medium">
-                    <i data-lucide="step-forward" class="w-4 h-4"></i> 下一步
-                </button>
-            </div>
+    <div class="max-w-7xl mx-auto">
+        <!-- Header (Title Only) -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+                <i data-lucide="repeat" class="w-8 h-8"></i>
+                C++ While 迴圈視覺化
+            </h1>
+            <p class="text-slate-500 text-sm mt-1">觀察變數 i 如何控制迴圈的執行次數與輸出</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- Left Panel: Visualization -->
-            <div class="space-y-6">
+            <!-- Left Column -->
+            <div class="flex flex-col gap-6">
                 
-                <!-- Status Box -->
-                <div id="status-box" class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg min-h-[4.5rem] flex items-center shadow-sm">
-                    <span id="status-text" class="text-indigo-900 font-medium">準備就緒，請點擊「下一步」開始。</span>
-                </div>
-
-                <!-- Memory & Logic Visualization -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-8">CPU 與 記憶體狀態</h3>
-
-                    <div class="flex justify-around items-start">
+                <!-- Top Left: Code (程式碼) -->
+                <div class="flex-1 flex flex-col gap-4">
+                    <div class="bg-slate-900 text-slate-300 p-6 rounded-xl font-mono text-sm shadow-xl leading-relaxed relative overflow-hidden flex-1 min-h-[300px]">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-2">
+                            <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="code-2" class="w-4 h-4"></i> source.cpp
+                            </h3>
+                        </div>
                         
-                        <!-- Variable Box -->
-                        <div class="flex flex-col items-center">
-                            <span class="text-xs text-slate-500 mb-1 font-mono">int i</span>
-                            <div id="var-box" class="w-24 h-24 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-sm transition-all duration-300">
-                                <span id="var-value" class="text-4xl font-bold text-slate-700">-</span>
-                            </div>
-                            <span class="text-xs text-green-600 mt-2 font-bold opacity-0 transition-opacity" id="inc-badge">+1</span>
-                        </div>
-
-                        <!-- Condition Check Visual -->
-                        <div class="flex flex-col items-center justify-center mt-2 relative w-32">
-                            <div class="text-xs text-slate-500 mb-2">條件判斷</div>
-                            <div class="h-16 flex items-center justify-center">
-                                <span id="condition-expr" class="font-mono text-lg text-slate-400">i &lt; <span id="limit-display">5</span></span>
-                            </div>
-                            <!-- Result Badge (Absolute) -->
-                            <div id="condition-result" class="absolute top-8 transform scale-0 transition-transform duration-300">
-                                <!-- JS Injects result here -->
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Console Output -->
-                <div class="bg-slate-900 rounded-xl shadow-lg overflow-hidden flex flex-col h-64 border border-slate-700">
-                    <div class="bg-slate-800 px-4 py-2 flex items-center gap-2 border-b border-slate-700">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span class="text-xs text-slate-400 ml-2 font-mono">Terminal (Output)</span>
-                    </div>
-                    <div id="console-output" class="p-4 font-mono text-green-400 text-sm overflow-y-auto flex-1 space-y-1">
-                        <!-- Output logs go here -->
-                        <span class="text-slate-500 opacity-50 select-none">&gt; 等待程式執行...</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Right Panel: Code -->
-            <div class="relative">
-                <div class="sticky top-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-slate-700">source.cpp</h3>
-                    </div>
-                    
-                    <div class="bg-slate-900 text-slate-300 p-6 rounded-xl font-mono text-sm shadow-xl leading-relaxed relative overflow-hidden">
                         <!-- Line Numbers -->
-                        <div class="absolute left-0 top-0 bottom-0 w-12 bg-slate-800/50 border-r border-slate-700 flex flex-col items-center pt-6 text-slate-600 select-none">
+                        <div class="absolute left-0 top-16 bottom-0 w-12 bg-slate-800/50 border-r border-slate-700 flex flex-col items-center pt-2 text-slate-600 select-none">
                             <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
                         </div>
 
@@ -149,9 +70,9 @@
                             <!-- JS will generate lines -->
                         </div>
                     </div>
-
-                    <!-- Flow Explanation -->
-                    <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+                    
+                    <!-- Logic Explanation (Attached to Code) -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800 shadow-sm">
                         <h4 class="font-bold mb-1 flex items-center gap-2">
                             <i data-lucide="info" class="w-4 h-4"></i> 邏輯說明
                         </h4>
@@ -160,6 +81,115 @@
                         </p>
                     </div>
                 </div>
+
+                <!-- Bottom Left: Parameters & Controls (參數按鈕) -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-indigo-500"></i> 
+                        參數設定與控制
+                    </h3>
+                    
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs text-slate-500 font-bold">條件上限 (N)</label>
+                            <input type="number" id="input-limit" value="5" min="1" max="20" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-bold focus:ring-2 focus:ring-indigo-200 outline-none">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs text-slate-500 font-bold">初始值 (i)</label>
+                            <input type="number" id="input-init" value="0" min="0" max="10" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-bold focus:ring-2 focus:ring-indigo-200 outline-none">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs text-slate-500 font-bold">每次增量 (+)</label>
+                            <input type="number" id="input-step" value="1" min="1" max="5" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-bold focus:ring-2 focus:ring-indigo-200 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
+                        <button id="btn-play" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors shadow-sm">
+                            <i data-lucide="play" class="w-5 h-5"></i> 自動執行
+                        </button>
+                        <button id="btn-next" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-lg font-medium transition-colors">
+                            <i data-lucide="step-forward" class="w-5 h-5"></i> 下一步
+                        </button>
+                        <button id="btn-reset" class="px-4 py-3 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors" title="重置">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column -->
+            <div class="flex flex-col gap-6">
+                
+                <!-- Top Right: Execution Screen (執行畫面: Status + Terminal) -->
+                <div class="flex flex-col gap-4">
+                    <!-- Status Box -->
+                    <div id="status-box" class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg min-h-[4.5rem] flex items-center shadow-sm">
+                        <span id="status-text" class="text-indigo-900 font-medium text-lg">準備就緒，請點擊「下一步」開始。</span>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="bg-slate-900 rounded-xl shadow-lg overflow-hidden flex flex-col h-64 border border-slate-700">
+                        <div class="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                            <div class="flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                <span class="text-xs text-slate-400 ml-2 font-mono">Terminal Output</span>
+                            </div>
+                            <i data-lucide="terminal" class="w-4 h-4 text-slate-500"></i>
+                        </div>
+                        <div id="console-output" class="p-4 font-mono text-green-400 text-sm overflow-y-auto flex-1 space-y-1">
+                            <!-- Output logs go here -->
+                            <span class="text-slate-500 opacity-50 select-none">&gt; 等待程式執行...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Right: CPU & Memory (CPU與記憶體狀態) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden flex-1 min-h-[300px]">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">CPU 與 記憶體狀態</h3>
+                        <i data-lucide="cpu" class="w-5 h-5 text-slate-300"></i>
+                    </div>
+
+                    <div class="flex justify-around items-start h-full pt-4">
+                        
+                        <!-- Variable Box -->
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-500 mb-1 font-mono font-bold">int i</span>
+                            <div class="relative">
+                                <div id="var-box" class="w-32 h-32 bg-white border-4 border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm transition-all duration-300">
+                                    <span id="var-value" class="text-6xl font-bold text-slate-700">-</span>
+                                </div>
+                                <span class="absolute -right-12 top-1/2 -translate-y-1/2 text-xl font-bold text-green-600 opacity-0 transition-opacity" id="inc-badge">+1</span>
+                            </div>
+                            <div class="mt-3 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">Memory Addr: 0x24A0</div>
+                        </div>
+
+                        <!-- Condition Check Visual -->
+                        <div class="flex flex-col items-center justify-center mt-4 relative w-40">
+                            <div class="text-xs text-slate-500 mb-2 font-bold">條件判斷單元</div>
+                            <div class="h-20 w-full bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-center relative">
+                                <span id="condition-expr" class="font-mono text-xl text-slate-400 font-bold">i &lt; <span id="limit-display">5</span></span>
+                            </div>
+                            
+                            <!-- Arrow connecting var to condition -->
+                            <div class="absolute -left-8 top-10 text-slate-200">
+                                <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                            </div>
+
+                            <!-- Result Badge (Absolute) -->
+                            <div id="condition-result" class="absolute -bottom-12 transform scale-0 transition-transform duration-300 z-10">
+                                <!-- JS Injects result here -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -246,7 +276,7 @@
             
             // Reset Visuals
             els.varValue.innerText = "-";
-            els.varBox.className = "w-24 h-24 bg-white border-2 border-slate-300 rounded-xl flex flex-col items-center justify-center shadow-sm transition-all duration-300";
+            els.varBox.className = "w-32 h-32 bg-white border-4 border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm transition-all duration-300";
             els.consoleOutput.innerHTML = `<span class="text-slate-500 opacity-50 select-none">&gt; 等待程式執行...</span>`;
             els.conditionResult.classList.add('scale-0');
             els.incBadge.style.opacity = '0';
@@ -312,8 +342,8 @@
                     
                     // Show result bubble
                     els.conditionResult.innerHTML = isTrue 
-                        ? `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold border border-green-300 shadow-sm flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> True</span>`
-                        : `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold border border-red-300 shadow-sm flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i> False</span>`;
+                        ? `<span class="bg-green-100 text-green-700 px-4 py-2 rounded-full text-base font-bold border-2 border-green-200 shadow-lg flex items-center gap-2"><i data-lucide="check" class="w-5 h-5"></i> True</span>`
+                        : `<span class="bg-red-100 text-red-700 px-4 py-2 rounded-full text-base font-bold border-2 border-red-200 shadow-lg flex items-center gap-2"><i data-lucide="x" class="w-5 h-5"></i> False</span>`;
                     lucide.createIcons();
                     
                     requestAnimationFrame(() => els.conditionResult.classList.remove('scale-0'));
@@ -368,7 +398,7 @@
             } else {
                 if (state.finished) reset();
                 state.isPlaying = true;
-                els.btnPlay.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> 暫停`;
+                els.btnPlay.innerHTML = `<i data-lucide="pause" class="w-5 h-5"></i> 暫停`;
                 els.btnPlay.classList.replace('bg-indigo-600', 'bg-red-500');
                 els.btnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-red-600');
                 lucide.createIcons();
@@ -389,7 +419,7 @@
         function stopPlay() {
             state.isPlaying = false;
             clearInterval(state.timer);
-            els.btnPlay.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> 自動執行`;
+            els.btnPlay.innerHTML = `<i data-lucide="play" class="w-5 h-5"></i> 自動執行`;
             els.btnPlay.classList.replace('bg-red-500', 'bg-indigo-600');
             els.btnPlay.classList.replace('hover:bg-red-600', 'hover:bg-indigo-700');
             lucide.createIcons();
