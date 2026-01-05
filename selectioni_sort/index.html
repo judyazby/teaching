@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ 選擇排序法互動教學 (由小到大)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .highlight-line {
+            background-color: rgba(234, 179, 8, 0.2);
+            border-left: 4px solid #eab308;
+            color: #fef08a;
+        }
+        .code-line {
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+        .code-comment {
+            color: #94a3b8; /* slate-400 */
+            font-style: italic;
+        }
+        .code-select {
+            background-color: #1e293b;
+            color: #fbbf24;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 0 4px;
+            height: 24px;
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .code-select:hover {
+            border-color: #fbbf24;
+        }
+        .code-select option {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        /* 陣列盒子樣式 */
+        .array-box {
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s; 
+            position: relative; 
+        }
+        /* 垃圾值盒子樣式 */
+        .garbage-box {
+            background-image: repeating-linear-gradient(45deg, #f1f5f9 25%, transparent 25%, transparent 75%, #f1f5f9 75%, #f1f5f9), repeating-linear-gradient(45deg, #f1f5f9 25%, #f8fafc 25%, #f8fafc 75%, #f1f5f9 75%, #f1f5f9);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            border-style: dashed !important;
+            color: #94a3b8 !important;
+        }
+        /* 交換動畫時的樣式 */
+        .moving {
+            z-index: 50;
+            transition: transform 0.8s ease-in-out; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 滑桿樣式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-indigo-700 flex items-center gap-2">
+                <i data-lucide="arrow-up-narrow-wide" class="w-8 h-8"></i>
+                C++ 選擇排序法 (由小到大)
+            </h1>
+            <p class="text-slate-500 text-sm mt-1">找出陣列中的最小值，將其交換到前方。請嘗試不同的迴圈條件觀察結果。</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Left Column -->
+            <div class="flex flex-col gap-6">
+                
+                <!-- Top Left: Code with Inputs -->
+                <div class="flex-1 flex flex-col gap-4">
+                    <div class="bg-slate-900 text-slate-300 p-6 rounded-xl font-mono text-sm shadow-xl leading-relaxed relative overflow-hidden flex-1 min-h-[550px]">
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-2">
+                            <h3 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="code-2" class="w-4 h-4"></i> main.cpp
+                            </h3>
+                            <span class="text-xs text-blue-400 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">自由探索模式</span>
+                        </div>
+                        
+                        <!-- Line Numbers -->
+                        <div class="absolute left-0 top-16 bottom-0 w-10 bg-slate-800/50 border-r border-slate-700 flex flex-col items-center pt-2 text-slate-600 select-none text-xs">
+                            <!-- JS Generated -->
+                        </div>
+
+                        <!-- Code Content -->
+                        <div class="pl-8 space-y-0.5" id="code-container">
+                            <!-- Lines injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Left: Controls -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-indigo-500"></i> 
+                        設定與控制
+                    </h3>
+                    
+                    <!-- Speed Slider -->
+                    <div class="flex items-center gap-3 mb-6 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span title="更慢"><i data-lucide="turtle" class="w-5 h-5 text-green-600"></i></span>
+                        <input type="range" id="input-speed" min="1" max="100" value="50" class="flex-1">
+                        <span title="更快"><i data-lucide="rabbit" class="w-5 h-5 text-orange-500"></i></span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
+                        <button id="btn-play" class="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg font-medium transition-colors shadow-sm">
+                            <i data-lucide="play" class="w-5 h-5"></i> 執行模擬
+                        </button>
+                        
+                        <!-- Navigation Group -->
+                        <div class="flex-1 flex gap-2">
+                            <button id="btn-prev" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i> 上一步
+                            </button>
+                            <button id="btn-next" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                下一步 <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        
+                        <button id="btn-reset" class="px-4 py-3 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors" title="重置">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column -->
+            <div class="flex flex-col gap-6">
+                
+                <!-- Top Right: Status & Console -->
+                <div class="flex flex-col gap-4">
+                    <!-- Status Box -->
+                    <div id="status-box" class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-lg min-h-[4rem] flex items-center shadow-sm">
+                        <span id="status-text" class="text-indigo-900 font-medium">請選擇程式碼中的迴圈條件，然後觀察執行結果。</span>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="bg-slate-900 rounded-xl shadow-lg overflow-hidden flex flex-col h-40 border border-slate-700">
+                        <div class="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                            <span class="text-xs text-slate-400 font-mono">Terminal Output</span>
+                            <i data-lucide="terminal" class="w-4 h-4 text-slate-500"></i>
+                        </div>
+                        <div id="console-output" class="p-4 font-mono text-green-400 text-sm overflow-y-auto flex-1 space-y-1">
+                            <span class="text-slate-500 opacity-50 select-none">&gt; 等待程式執行...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Right: Visualization (Array & Variables) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden flex-1 flex flex-col">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">記憶體與陣列狀態</h3>
+                        <div class="flex gap-4 text-xs font-mono">
+                            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-green-500 rounded-full"></div>i (當前)</div>
+                            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-blue-500 rounded-full"></div>j (掃描)</div>
+                            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-red-500 rounded-full"></div>idx (最小)</div>
+                        </div>
+                    </div>
+
+                    <!-- Array Visual -->
+                    <div class="flex-1 flex items-center justify-center py-4 overflow-x-auto relative">
+                        <div id="array-container" class="flex gap-2 items-end h-32 px-4">
+                            <!-- Array Boxes generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Variable Dashboard -->
+                    <div class="grid grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-500 font-mono">i</span>
+                            <span id="var-i" class="text-xl font-bold text-green-600">-</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-500 font-mono">j</span>
+                            <span id="var-j" class="text-xl font-bold text-blue-600">-</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-500 font-mono">idx</span>
+                            <span id="var-idx" class="text-xl font-bold text-red-600">-</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-xs text-slate-500 font-mono">count</span>
+                            <span id="var-count" class="text-xl font-bold text-slate-800">0</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            n: 5,
+            arr: [50, 90, 80, 70, 60], 
+            garbage: {}, 
+            i: -1,
+            j: -1,
+            idx: -1,
+            count: 0,
+            line: -1,
+            isPlaying: false,
+            isAnimating: false,
+            stepPhase: 'INIT', 
+            timer: null,
+            speed: 1000,
+            selOuterLim: '',
+            selInnerStart: '',
+            selInnerLim: '',
+            history: [] // State history for undo
+        };
+
+        // DOM Elements
+        const els = {
+            codeContainer: document.getElementById('code-container'),
+            inputSpeed: document.getElementById('input-speed'),
+            btnPlay: document.getElementById('btn-play'),
+            btnNext: document.getElementById('btn-next'),
+            btnPrev: document.getElementById('btn-prev'),
+            btnReset: document.getElementById('btn-reset'),
+            statusText: document.getElementById('status-text'),
+            statusBox: document.getElementById('status-box'),
+            consoleOutput: document.getElementById('console-output'),
+            arrayContainer: document.getElementById('array-container'),
+            varI: document.getElementById('var-i'),
+            varJ: document.getElementById('var-j'),
+            varIdx: document.getElementById('var-idx'),
+            varCount: document.getElementById('var-count')
+        };
+
+        // Updated Code Lines with Comments
+        // Mapping:
+        // 0: n definition
+        // 1: // comment count
+        // 2: int count = 0
+        // 3: // comment outer
+        // 4: for i
+        // 5:   idx = i
+        // 6:   // comment inner
+        // 7:   for j
+        // 8:     if <
+        // 9:       idx = j
+        // 10:    }
+        // 11:  }
+        // 12:  // comment swap
+        // 13:  if swap check
+        // 14:    temp = a[i]
+        // 15:    a[i] = a[idx]
+        // 16:    a[idx] = temp
+        // 17:    count++
+        // 18:  }
+        // 19: }
+        // 20: cout
+        const codeLines = [
+            { t: "int n = 5; // 陣列大小" },
+            { t: "// 記錄交換次數", comment: true },
+            { t: "int count = 0;" },
+            { t: "// 外層迴圈：依序決定第 i 個位置該放誰", comment: true },
+            { t: "for(int i = 0; i < %SELECT1%; i++){" },
+            { t: "  int idx = i;" },
+            { t: "  // 內層迴圈：從剩下未排序的數字中找最小值", comment: true },
+            { t: "  for(int j = %SELECT2%; j < %SELECT3%; j++){" },
+            { t: "    if(a[j] < a[idx]){" }, 
+            { t: "      idx = j;" },
+            { t: "    }" },
+            { t: "  }" },
+            { t: "  // 如果找到更小的數字，就交換到第 i 個位置", comment: true },
+            { t: "  if(a[idx] < a[i]){" }, 
+            { t: "    int temp = a[i];" },
+            { t: "    a[i] = a[idx];" },
+            { t: "    a[idx] = temp;" },
+            { t: "    count++;" },
+            { t: "  }" },
+            { t: "}" },
+            { t: "cout << count << endl;" }
+        ];
+
+        // Initialization
+        function init() {
+            renderCode();
+            renderArray(); 
+            updateVisuals();
+            lucide.createIcons();
+            updateSpeed();
+            
+            els.btnReset.addEventListener('click', resetSimulation);
+            els.btnPlay.addEventListener('click', togglePlay);
+            els.btnNext.addEventListener('click', () => { 
+                if(!state.isAnimating) {
+                    stopPlay(); 
+                    nextStep(); 
+                }
+            });
+            els.btnPrev.addEventListener('click', () => {
+                if(!state.isAnimating) {
+                    stopPlay();
+                    prevStep();
+                }
+            });
+            
+            els.inputSpeed.addEventListener('input', updateSpeed);
+
+            document.getElementById('sel-outer').addEventListener('change', (e) => {
+                state.selOuterLim = e.target.value;
+                checkReady();
+            });
+            document.getElementById('sel-inner-start').addEventListener('change', (e) => {
+                state.selInnerStart = e.target.value;
+                checkReady();
+            });
+            document.getElementById('sel-inner-lim').addEventListener('change', (e) => {
+                state.selInnerLim = e.target.value;
+                checkReady();
+            });
+        }
+
+        function checkReady() {
+            if (state.selOuterLim !== '' && state.selInnerStart !== '' && state.selInnerLim !== '') {
+                if (els.statusBox.classList.contains('bg-red-50')) {
+                    updateStatus("準備就緒，點擊執行模擬。");
+                }
+            }
+        }
+
+        function updateSpeed() {
+            const val = parseInt(els.inputSpeed.value);
+            state.speed = 2200 - (val * 20); 
+            if(state.speed < 100) state.speed = 100;
+        }
+
+        function renderCode() {
+            let html = '';
+            
+            const sel1 = `<select id="sel-outer" class="code-select">
+                            <option value="" selected disabled>?</option>
+                            <option value="n-1">n-1</option>
+                            <option value="n">n</option>
+                            <option value="n+1">n+1</option>
+                          </select>`;
+            
+            const sel2 = `<select id="sel-inner-start" class="code-select">
+                            <option value="" selected disabled>?</option>
+                            <option value="0">0</option>
+                            <option value="i">i</option>
+                            <option value="i+1">i+1</option>
+                          </select>`;
+
+            const sel3 = `<select id="sel-inner-lim" class="code-select">
+                            <option value="" selected disabled>?</option>
+                            <option value="i">i</option>
+                            <option value="n-1">n-1</option>
+                            <option value="n">n</option>
+                            <option value="n+1">n+1</option>
+                          </select>`;
+
+            codeLines.forEach((line, idx) => {
+                let content = line.t;
+                if (!line.comment) {
+                    content = content
+                        .replace('%SELECT1%', sel1)
+                        .replace('%SELECT2%', sel2)
+                        .replace('%SELECT3%', sel3);
+                }
+                
+                const extraClass = line.comment ? 'code-comment' : '';
+                
+                html += `<div id="line-${idx}" class="code-line pl-2 pr-2 py-0.5 rounded flex text-xs md:text-sm ${extraClass}">
+                            <span class="mr-4 text-slate-600 select-none w-4 text-right">${idx+1}</span>
+                            <span class="whitespace-pre font-mono">${content}</span>
+                         </div>`;
+            });
+            els.codeContainer.innerHTML = html;
+        }
+
+        function getMemoryValue(index) {
+            if (index < 0) return 0; 
+            if (index < state.n) {
+                return state.arr[index];
+            } else {
+                if (!(index in state.garbage)) {
+                    state.garbage[index] = Math.floor(Math.random() * 20000) - 10000; 
+                }
+                return state.garbage[index];
+            }
+        }
+
+        function renderArray() {
+            const maxPtr = Math.max(state.i, state.j, state.idx, state.n - 1);
+            let html = '';
+            
+            for (let idx = 0; idx <= maxPtr; idx++) {
+                let val = getMemoryValue(idx);
+                let isGarbage = idx >= state.n;
+                
+                let classes = "array-box w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-slate-300 rounded flex items-center justify-center font-bold shadow-sm text-lg";
+                
+                if (isGarbage) {
+                    classes += " garbage-box"; 
+                }
+
+                let label = "";
+                let topLabel = `<div class="absolute -top-6 text-xs text-slate-400 font-mono">a[${idx}]</div>`; 
+
+                // Styles based on pointers
+                if (idx === state.i) {
+                    classes += " border-green-500 bg-green-50 text-green-700 z-10";
+                    if (!isGarbage) classes = classes.replace('garbage-box', ''); 
+                    label += `<div class="absolute -bottom-6 text-xs text-green-600 font-bold">i</div>`;
+                }
+                if (idx === state.j) {
+                    classes += " border-blue-500 bg-blue-50 text-blue-700 z-20 shadow-md transform -translate-y-2";
+                     if (!isGarbage) classes = classes.replace('garbage-box', '');
+                    label += `<div class="absolute -bottom-6 text-xs text-blue-600 font-bold">j</div>`;
+                }
+                if (idx === state.idx) {
+                    classes += " border-red-500 bg-red-50 text-red-700 shadow-[0_0_10px_rgba(239,68,68,0.4)]";
+                     if (!isGarbage) classes = classes.replace('garbage-box', '');
+                    if (idx !== state.i && idx !== state.j) {
+                        label += `<div class="absolute -bottom-6 text-xs text-red-600 font-bold">min</div>`;
+                    } else {
+                         label += `<div class="absolute -bottom-9 text-xs text-red-600 font-bold">min</div>`;
+                    }
+                }
+                
+                if (!isGarbage && state.i > 0 && idx < state.i && idx < state.n) {
+                    classes += " bg-slate-200 border-slate-300 opacity-80";
+                }
+
+                html += `<div id="box-${idx}" class="${classes}">
+                            ${topLabel}
+                            ${val}
+                            ${label}
+                        </div>`;
+            }
+            els.arrayContainer.innerHTML = html;
+        }
+
+        function resetSimulation() {
+            stopPlay();
+            state.i = -1;
+            state.j = -1;
+            state.idx = -1;
+            state.count = 0;
+            state.line = -1;
+            state.stepPhase = 'INIT';
+            state.isAnimating = false;
+            state.garbage = {}; 
+            state.history = []; // Clear history
+            
+            // Enable inputs
+            document.querySelectorAll('.code-select').forEach(el => el.disabled = false);
+            els.btnNext.disabled = true;
+            els.btnPrev.disabled = true;
+            els.btnPlay.innerHTML = `<i data-lucide="play" class="w-5 h-5"></i> 執行模擬`;
+            
+            // Restore default array
+            state.arr = [50, 90, 80, 70, 60];
+            
+            renderArray();
+            
+            // Clear Log
+            els.consoleOutput.innerHTML = `<span class="text-slate-500 opacity-50 select-none">&gt; 等待程式執行...</span>`;
+            
+            updateStatus("請選擇程式碼中的迴圈條件。");
+            updateVisuals();
+            highlightLine(-1);
+            lucide.createIcons();
+        }
+
+        function togglePlay() {
+            if (state.isPlaying) {
+                stopPlay();
+            } else {
+                startPlay();
+            }
+        }
+
+        function startPlay() {
+            if (state.selOuterLim === '' || state.selInnerStart === '' || state.selInnerLim === '') {
+                updateStatus("請先完成程式碼中的所有空格選擇", "error");
+                return;
+            }
+
+            state.isPlaying = true;
+            els.btnPlay.innerHTML = `<i data-lucide="pause" class="w-5 h-5"></i> 暫停`;
+            els.btnPlay.classList.replace('bg-indigo-600', 'bg-red-500');
+            els.btnPlay.classList.replace('hover:bg-indigo-700', 'hover:bg-red-600');
+            
+            // Lock inputs
+            document.querySelectorAll('.code-select').forEach(el => el.disabled = true);
+            els.btnNext.disabled = false;
+            // Only enable prev if history exists
+            els.btnPrev.disabled = state.history.length === 0;
+
+            runLoop();
+            lucide.createIcons();
+        }
+
+        function runLoop() {
+            if (!state.isPlaying) return;
+            if (state.isAnimating) return; 
+
+            nextStep();
+            
+            if (state.isPlaying && !state.isAnimating) {
+                state.timer = setTimeout(runLoop, state.speed);
+            }
+        }
+
+        function stopPlay() {
+            state.isPlaying = false;
+            clearTimeout(state.timer);
+            els.btnPlay.innerHTML = `<i data-lucide="play" class="w-5 h-5"></i> 繼續執行`;
+            els.btnPlay.classList.replace('bg-red-500', 'bg-indigo-600');
+            els.btnPlay.classList.replace('hover:bg-red-600', 'hover:bg-indigo-700');
+            lucide.createIcons();
+            
+            // Ensure buttons reflect state
+            els.btnPrev.disabled = state.history.length === 0;
+            // If finished, next is disabled, handled in nextStep
+        }
+
+        function highlightLine(lineNum) {
+            document.querySelectorAll('.code-line').forEach(el => el.classList.remove('highlight-line'));
+            if(lineNum >= 0) {
+                document.getElementById(`line-${lineNum}`).classList.add('highlight-line');
+            }
+        }
+
+        function log(msg, type='info') {
+            const div = document.createElement('div');
+            div.className = "text-xs md:text-sm font-mono";
+            if (type === 'error') div.className += " text-red-400 font-bold";
+            if (type === 'success') div.className += " text-green-400 font-bold";
+            div.innerText = "> " + msg;
+            els.consoleOutput.appendChild(div);
+            els.consoleOutput.scrollTop = els.consoleOutput.scrollHeight;
+        }
+
+        function updateStatus(msg, type='normal') {
+            els.statusText.innerText = msg;
+            if (type === 'error') {
+                 els.statusBox.classList.replace('border-indigo-500', 'border-red-500');
+                 els.statusBox.classList.replace('bg-indigo-50', 'bg-red-50');
+                 els.statusBox.querySelector('span').classList.add('text-red-800');
+            } else {
+                 els.statusBox.classList.replace('border-red-500', 'border-indigo-500');
+                 els.statusBox.classList.replace('bg-red-50', 'bg-indigo-50');
+                 els.statusBox.querySelector('span').classList.remove('text-red-800');
+            }
+        }
+
+        function updateVisuals() {
+            els.varI.innerText = state.i === -1 ? '-' : state.i;
+            els.varJ.innerText = state.j === -1 ? '-' : state.j;
+            els.varIdx.innerText = state.idx === -1 ? '-' : state.idx;
+            els.varCount.innerText = state.count;
+            
+            // Button states
+            els.btnPrev.disabled = state.history.length === 0 || state.isAnimating;
+        }
+
+        function getOuterLimit() {
+            if (state.selOuterLim === 'n-1') return state.n - 1;
+            if (state.selOuterLim === 'n') return state.n;
+            if (state.selOuterLim === 'n+1') return state.n + 1;
+            return state.n;
+        }
+        function getInnerStart() {
+            if (state.selInnerStart === '0') return 0;
+            if (state.selInnerStart === 'i') return state.i;
+            if (state.selInnerStart === 'i+1') return state.i + 1;
+            return state.i + 1;
+        }
+        function getInnerLimit() {
+            if (state.selInnerLim === 'i') return state.i;
+            if (state.selInnerLim === 'n-1') return state.n - 1;
+            if (state.selInnerLim === 'n') return state.n;
+            if (state.selInnerLim === 'n+1') return state.n + 1;
+            return state.n;
+        }
+
+        function performSwapAnimation(idx1, idx2, callback) {
+            const el1 = document.getElementById(`box-${idx1}`);
+            const el2 = document.getElementById(`box-${idx2}`);
+            
+            if (!el1 || !el2) {
+                callback();
+                return;
+            }
+
+            state.isAnimating = true;
+            // Disable buttons during animation
+            els.btnPrev.disabled = true;
+            els.btnNext.disabled = true;
+            
+            el1.classList.add('moving');
+            el2.classList.add('moving');
+
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+            const dist1 = rect2.left - rect1.left;
+            const dist2 = rect1.left - rect2.left;
+
+            el1.style.transform = `translateX(${dist1}px)`;
+            el2.style.transform = `translateX(${dist2}px)`;
+
+            setTimeout(() => {
+                el1.style.transform = '';
+                el2.style.transform = '';
+                el1.classList.remove('moving');
+                el2.classList.remove('moving');
+                state.isAnimating = false;
+                els.btnNext.disabled = false; // Re-enable
+                callback();
+                
+                if (state.isPlaying) {
+                    state.timer = setTimeout(runLoop, state.speed);
+                }
+            }, 800); 
+        }
+        
+        // History Management
+        function saveState() {
+            state.history.push({
+                i: state.i, j: state.j, idx: state.idx, count: state.count,
+                line: state.line, stepPhase: state.stepPhase,
+                arr: [...state.arr], garbage: {...state.garbage},
+                // Deep clone not needed for primitives
+            });
+        }
+        
+        function prevStep() {
+            if (state.history.length === 0) return;
+            const prev = state.history.pop();
+            state.i = prev.i;
+            state.j = prev.j;
+            state.idx = prev.idx;
+            state.count = prev.count;
+            state.line = prev.line;
+            state.stepPhase = prev.stepPhase;
+            state.arr = prev.arr;
+            state.garbage = prev.garbage;
+            
+            // Re-render
+            renderArray();
+            updateVisuals();
+            highlightLine(state.line);
+            
+            // Remove last log if possible? Or just append a "Undo" message
+            // log("Undo operation", "info"); 
+        }
+
+        function nextStep() {
+            // Save state before modifying
+            saveState();
+            
+            switch(state.stepPhase) {
+                case 'INIT': {
+                    log(`開始選擇排序 (N=${state.n})`);
+                    state.i = 0;
+                    state.stepPhase = 'OUTER_START';
+                    state.line = 4; // for loop i
+                    highlightLine(state.line); 
+                    updateStatus(`進入外層迴圈，i = ${state.i}`);
+                    break;
+                }
+
+                case 'OUTER_START': {
+                    let outerLimit = getOuterLimit();
+                    
+                    if (state.i < outerLimit) {
+                        state.idx = state.i;
+                        state.j = getInnerStart();
+                        
+                        state.stepPhase = 'INNER_START';
+                        state.line = 5; // idx = i
+                        highlightLine(state.line); 
+                        updateStatus(`設 i=${state.i} 為暫定最小值 (idx=${state.idx})`);
+                    } else {
+                        state.stepPhase = 'FINISH';
+                        state.line = 20; // cout
+                        highlightLine(state.line);
+                        log(`迴圈結束。總交換次數: ${state.count}`, 'success');
+                        log(`最終結果: [${state.arr.join(', ')}]`, 'success');
+                        updateStatus("執行完畢。請檢查陣列是否排序正確？");
+                        stopPlay();
+                        els.btnNext.disabled = true;
+                    }
+                    break;
+                }
+
+                case 'INNER_START': {
+                    state.line = 7; // for j
+                    highlightLine(state.line); 
+                    let innerLimit = getInnerLimit();
+                    
+                    if (state.j < innerLimit) {
+                        state.stepPhase = 'INNER_CHECK';
+                        updateStatus(`內層 j = ${state.j}，比較 arr[j] 與 arr[idx]`);
+                    } else {
+                        state.stepPhase = 'SWAP_CHECK';
+                        updateStatus(`內層迴圈結束，檢查是否需要交換`);
+                    }
+                    break;
+                }
+
+                case 'INNER_CHECK': {
+                    state.line = 8; // if <
+                    highlightLine(state.line); 
+                    let valJ = getMemoryValue(state.j);
+                    let valIdx = getMemoryValue(state.idx);
+                    
+                    if (state.j >= state.n) {
+                         updateStatus(`越界存取 (OOB)! 讀取 a[${state.j}] = ${valJ} (垃圾值)`, 'error');
+                    }
+
+                    if (valJ < valIdx) {
+                        log(`發現更小值！ ${valJ} < ${valIdx} (arr[${state.idx}])`);
+                        state.stepPhase = 'INNER_UPDATE';
+                    } else {
+                        state.stepPhase = 'INNER_INC';
+                        updateStatus(`${valJ} >= ${valIdx}，不需更新`);
+                    }
+                    break;
+                }
+
+                case 'INNER_UPDATE': {
+                    state.line = 9; // idx = j
+                    highlightLine(state.line); 
+                    state.idx = state.j;
+                    state.stepPhase = 'INNER_INC';
+                    updateStatus(`更新 idx = ${state.idx}`);
+                    break;
+                }
+
+                case 'INNER_INC': {
+                    state.j++;
+                    state.stepPhase = 'INNER_START';
+                    state.line = 7; 
+                    highlightLine(state.line); 
+                    break;
+                }
+
+                case 'SWAP_CHECK': {
+                    state.line = 13; // if swap check
+                    highlightLine(state.line); 
+                    let vIdx = getMemoryValue(state.idx);
+                    let vI = getMemoryValue(state.i);
+                    
+                    if (vIdx < vI) {
+                         state.stepPhase = 'SWAP_START'; 
+                         updateStatus(`確定 arr[idx](${vIdx}) < arr[i](${vI})，進行交換`);
+                    } else {
+                        log(`Round ${state.i + 1} 結束 (無需交換): [${state.arr.join(', ')}]`);
+                        state.stepPhase = 'OUTER_INC';
+                    }
+                    break;
+                }
+
+                case 'SWAP_START': {
+                    state.line = 14; // int temp
+                    highlightLine(state.line); 
+                    log(`準備交換: temp = a[${state.i}]`);
+                    state.stepPhase = 'SWAP_EXEC';
+                    break;
+                }
+                
+                case 'SWAP_EXEC': {
+                    state.line = 15; // Assignments
+                    highlightLine(state.line); 
+                    
+                    let valI = getMemoryValue(state.i);
+                    let valIdx = getMemoryValue(state.idx);
+                    
+                    // Note: saveState was called at start of nextStep. 
+                    // But performSwapAnimation is async. 
+                    // We need to ensure state is consistent.
+                    
+                    const setMem = (idx, val) => {
+                        if (idx < state.n) state.arr[idx] = val;
+                        else state.garbage[idx] = val;
+                    };
+                    
+                    performSwapAnimation(state.i, state.idx, () => {
+                         setMem(state.i, valIdx);
+                         setMem(state.idx, valI);
+                         
+                         state.count++;
+                         state.stepPhase = 'OUTER_INC';
+                         renderArray(); 
+                         updateVisuals();
+                         log(`交換完成。Round ${state.i + 1} 結束: [${state.arr.join(', ')}]`, 'success');
+                     });
+                    return; 
+                }
+
+                case 'OUTER_INC': {
+                    state.i++;
+                    state.j = -1; 
+                    state.idx = -1; 
+                    state.stepPhase = 'OUTER_START';
+                    state.line = 4;
+                    highlightLine(state.line);
+                    break;
+                }
+                
+                case 'CRASHED':
+                    break;
+            }
+            renderArray();
+            updateVisuals();
+        }
+
+        // Init
+        init();
+
+    </script>
+</body>
+</html>
