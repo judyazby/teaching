@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二分搜尋法逐步教學動畫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cell {
+            transition: all 0.4s ease;
+        }
+        .pointer {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .highlight-green { color: #2ecc71; }
+        .highlight-orange { color: #e67e22; }
+        .highlight-red { color: #e74c3c; }
+        .bg-inactive { background-color: #f1f5f9; color: #cbd5e1; border-color: #e2e8f0; }
+        .mode-active { background-color: #3b82f6; color: white; border-color: #2563eb; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-start p-2">
+
+    <div class="max-w-4xl w-full bg-white rounded-lg shadow-md p-4 sm:p-6">
+        <h1 class="text-xl font-bold text-center text-slate-800 mb-1">二分搜尋法逐步搜尋過程</h1>
+        <p class="text-center text-blue-600 font-mono text-lg mb-2">a[7] = [11, 20, 35, 42, 66, 77, 99]</p>
+
+        <!-- 模式切換 -->
+        <div class="flex justify-center gap-2 mb-4">
+            <button onclick="changeMode(66)" id="mode-66" class="px-4 py-1 text-sm rounded-full border border-slate-300 transition mode-active">情境一：搜尋 66 (成功)</button>
+            <button onclick="changeMode(87)" id="mode-87" class="px-4 py-1 text-sm rounded-full border border-slate-300 transition">情境二：搜尋 87 (失敗)</button>
+        </div>
+
+        <!-- 搜尋目標與指標區域 -->
+        <div class="relative mt-12 mb-10 h-24 flex justify-center">
+            <div id="low-pointer" class="pointer absolute -top-10 flex flex-col items-center w-12">
+                <span class="text-xs font-bold highlight-green">low</span>
+                <span class="text-xl highlight-green">↓</span>
+            </div>
+            <div id="mid-pointer" class="pointer absolute -top-10 flex flex-col items-center w-12">
+                <span class="text-xs font-bold highlight-red">mid</span>
+                <span class="text-xl highlight-red">↓</span>
+            </div>
+            <div id="high-pointer" class="pointer absolute -top-10 flex flex-col items-center w-12">
+                <span class="text-xs font-bold highlight-orange">high</span>
+                <span class="text-xl highlight-orange">↓</span>
+            </div>
+
+            <div class="flex gap-1.5" id="array-container"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+            <div class="md:col-span-1 space-y-3">
+                <div class="bg-blue-50 p-3 rounded-lg text-center border border-blue-100">
+                    <div class="text-sm font-semibold text-blue-800">目標值 (Key)</div>
+                    <div id="current-key" class="text-2xl font-bold text-blue-700">66</div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button onclick="nextStep()" id="next-btn" class="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-30 transition font-bold shadow-sm">下一步</button>
+                    <div class="flex gap-2">
+                        <button onclick="prevStep()" id="prev-btn" class="flex-1 py-1.5 bg-slate-400 text-white rounded-md hover:bg-slate-500 disabled:opacity-30 transition text-sm">上一步</button>
+                        <button onclick="reset()" class="flex-1 py-1.5 border border-slate-300 text-slate-600 rounded-md hover:bg-slate-50 transition text-sm">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-3">
+                <div class="bg-slate-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm min-h-[120px]">
+                    <div id="step-title" class="font-bold text-blue-800 border-b border-slate-200 pb-1 mb-2 text-base">準備開始</div>
+                    <div id="step-desc" class="text-slate-700 text-sm sm:text-base leading-relaxed"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const arrayData = [11, 20, 35, 42, 66, 77, 99];
+        let currentKey = 66;
+        let currentStep = 0;
+        let steps = [];
+
+        const steps66 = [
+            { low: 0, high: 6, mid: -1, title: "初始化", desc: "範圍索引 0 ~ 6。<br><span class='highlight-green font-bold'>low = 0</span>, <span class='highlight-orange font-bold'>high = 6</span>。" },
+            { low: 0, high: 6, mid: 3, title: "步驟一：計算中間值", desc: "<b>mid = (0+6)/2 = 3</b>。<br>檢查 a[3] = 42。" },
+            { low: 4, high: 6, mid: 3, title: "步驟一：比較與移動", desc: "<b>42 < 66</b>，目標在右側。<br>更新 <span class='highlight-green font-bold'>low = mid + 1 = 4</span>。" },
+            { low: 4, high: 6, mid: 5, title: "步驟二：計算中間值", desc: "<b>mid = (4+6)/2 = 5</b>。<br>檢查 a[5] = 77。" },
+            { low: 4, high: 4, mid: 5, title: "步驟二：比較與移動", desc: "<b>77 > 66</b>，目標在左側。<br>更新 <span class='highlight-orange font-bold'>high = mid - 1 = 4</span>。" },
+            { low: 4, high: 4, mid: 4, title: "步驟三：最終檢查", desc: "<b>mid = (4+4)/2 = 4</b>。<br>檢查 a[4] = 66。" },
+            { low: 4, high: 4, mid: 4, title: "搜尋成功", desc: "<b>a[4] = 66</b>，成功找到目標！回傳索引 <b>4</b>。" }
+        ];
+
+        const steps87 = [
+            { low: 0, high: 6, mid: -1, title: "初始化", desc: "開始搜尋 87。範圍索引 0 ~ 6。<br><span class='highlight-green font-bold'>low = 0</span>, <span class='highlight-orange font-bold'>high = 6</span>。" },
+            { low: 0, high: 6, mid: 3, title: "第一步", desc: "<b>mid = (0+6)/2 = 3</b>。<br>a[3] = 42 < 87，目標在右側。<br>更新 <span class='highlight-green font-bold'>low = 4</span>。" },
+            { low: 4, high: 6, mid: 5, title: "第二步", desc: "<b>mid = (4+6)/2 = 5</b>。<br>a[5] = 77 < 87，目標還在右側。<br>更新 <span class='highlight-green font-bold'>low = 5+1 = 6</span>。" },
+            { low: 6, high: 6, mid: 6, title: "第三步", desc: "<b>mid = (6+6)/2 = 6</b>。<br>a[6] = 99 > 87，目標在左側。<br>更新 <span class='highlight-orange font-bold'>high = 6-1 = 5</span>。" },
+            { low: 6, high: 5, mid: -1, title: "搜尋失敗", desc: "現在 <span class='highlight-green font-bold'>low (6)</span> 已經超過了 <span class='highlight-orange font-bold'>high (5)</span>！<br>搜尋範圍已空，表示 <b>87 不在陣列中</b>。" }
+        ];
+
+        function changeMode(key) {
+            currentKey = key;
+            document.getElementById('current-key').innerText = key;
+            document.getElementById('mode-66').className = key === 66 ? 'px-4 py-1 text-sm rounded-full border transition mode-active' : 'px-4 py-1 text-sm rounded-full border border-slate-300 transition';
+            document.getElementById('mode-87').className = key === 87 ? 'px-4 py-1 text-sm rounded-full border transition mode-active' : 'px-4 py-1 text-sm rounded-full border border-slate-300 transition';
+            steps = key === 66 ? steps66 : steps87;
+            reset();
+        }
+
+        function initArray() {
+            const container = document.getElementById('array-container');
+            container.innerHTML = '';
+            arrayData.forEach((val, i) => {
+                const div = document.createElement('div');
+                div.id = `cell-${i}`;
+                div.className = "cell w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center border-2 border-slate-800 bg-white font-bold rounded relative";
+                div.innerHTML = `<span class="text-sm sm:text-base">${val}</span><span class="absolute -bottom-5 text-[10px] text-slate-400 font-normal">${i}</span>`;
+                container.appendChild(div);
+            });
+            steps = steps66;
+            updateUI();
+        }
+
+        function updateUI() {
+            const step = steps[currentStep];
+            const isMobile = window.innerWidth < 640;
+            const cellWidth = (isMobile ? 40 : 48) + 6;
+
+            document.getElementById('low-pointer').style.transform = `translateX(${(step.low - 3) * cellWidth}px)`;
+            document.getElementById('high-pointer').style.transform = `translateX(${(step.high - 3) * cellWidth}px)`;
+            
+            const midPtr = document.getElementById('mid-pointer');
+            if (step.mid === -1) {
+                midPtr.style.opacity = '0';
+            } else {
+                midPtr.style.opacity = '1';
+                midPtr.style.transform = `translateX(${(step.mid - 3) * cellWidth}px)`;
+            }
+
+            arrayData.forEach((_, i) => {
+                const cell = document.getElementById(`cell-${i}`);
+                cell.classList.remove('bg-inactive', 'border-blue-500', 'bg-blue-100', 'ring-2', 'ring-red-500', 'bg-yellow-50', 'ring-slate-400');
+                if (i < Math.min(step.low, step.high + 1) || i > Math.max(step.high, step.low - 1)) cell.classList.add('bg-inactive');
+                if (i === step.mid) cell.classList.add('border-blue-500', 'bg-blue-100');
+                if (currentStep === steps.length - 1) {
+                    if (currentKey === 66 && i === step.mid) cell.classList.add('ring-2', 'ring-red-500', 'bg-yellow-50');
+                    if (currentKey === 87) { /* 失敗時不特別標註格子 */ }
+                }
+            });
+
+            document.getElementById('step-title').innerText = step.title;
+            document.getElementById('step-desc').innerHTML = step.desc || "請點擊下一步按鈕。";
+            document.getElementById('prev-btn').disabled = currentStep === 0;
+            document.getElementById('next-btn').disabled = currentStep === steps.length - 1;
+        }
+
+        function nextStep() { if (currentStep < steps.length - 1) { currentStep++; updateUI(); } }
+        function prevStep() { if (currentStep > 0) { currentStep--; updateUI(); } }
+        function reset() { currentStep = 0; updateUI(); }
+        
+        window.onload = initArray;
+        window.onresize = updateUI;
+    </script>
+</body>
+</html>
