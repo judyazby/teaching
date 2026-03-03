@@ -30,14 +30,48 @@
         .console-text {
             font-family: 'Courier New', Courier, monospace;
         }
-        /* 針對程式碼與輸出視窗縮減高度 */
+        
+        /* 基礎卡片高度 */
         .dashboard-card-sm {
             height: 180px;
         }
-        /* 保持參數與 RAM 區塊原本的高度 */
         .dashboard-card-lg {
             height: 320px;
         }
+
+        /* 右上角與右下角佈局調整 */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            height: 524px; /* 180 (sm) + 24 (gap) + 320 (lg) */
+        }
+
+        .trace-box {
+            height: 70px;
+        }
+        .terminal-box {
+            flex-grow: 1; /* 自動填滿剩餘空間 */
+            min-height: 180px;
+        }
+        .dashboard-card-ram {
+            height: 180px;
+        }
+
+        /* Trace Log 動態顏色標籤 */
+        .log-tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+            font-size: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tag-init { background-color: #3b82f6; color: white; } 
+        .tag-check { background-color: #a855f7; color: white; } 
+        .tag-body { background-color: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; } 
+        .tag-update { background-color: #22c55e; color: white; } 
+        .tag-end { background-color: #ef4444; color: white; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -46,85 +80,91 @@
             <h1 class="text-2xl font-bold text-slate-800">C++ For 迴圈視覺化控制台</h1>
         </header>
 
-        <!-- 四宮格佈局 -->
+        <!-- 左右雙欄佈局 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            <!-- [左上] 程式碼顯示區 -->
-            <div class="dashboard-card-sm bg-slate-900 text-gray-100 p-6 rounded-xl shadow-lg relative overflow-hidden">
-                <div class="absolute top-2 right-4 text-xs text-slate-500 uppercase tracking-widest font-bold">Source Code</div>
-                <div class="mt-2">
-                    <pre class="text-sm md:text-base leading-relaxed">
+            <!-- [左側] 程式碼與控制 -->
+            <div class="flex flex-col gap-6">
+                <!-- 程式碼顯示區 -->
+                <div class="dashboard-card-sm bg-slate-900 text-gray-100 p-6 rounded-xl shadow-lg relative overflow-hidden border-b-4 border-blue-500">
+                    <div class="absolute top-2 right-4 text-xs text-slate-500 uppercase tracking-widest font-bold">Source Code</div>
+                    <div class="mt-2">
+                        <pre class="text-sm md:text-base leading-relaxed">
 <div id="line-1" class="code-line px-2">for(<span id="code-init" class="text-blue-400">int i = 0</span>; <span id="code-cond" class="text-purple-400">i < 5</span>; <span id="code-update" class="text-green-400">i++</span>){</div><div id="line-2" class="code-line px-2">    cout << i << endl;</div><div id="line-3" class="code-line px-2">}</div></pre>
+                    </div>
+                </div>
+
+                <!-- 參數設定與控制按鈕 -->
+                <div id="control-panel" class="dashboard-card-lg bg-white p-6 rounded-xl shadow-lg flex flex-col justify-between border-t-4 border-slate-800">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-wider">控制與參數設定</h2>
+                        <div class="grid grid-cols-3 gap-3 mb-6">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">起始值</label>
+                                <input type="number" id="start-val" value="0" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">終止值 (&lt;)</label>
+                                <input type="number" id="end-val" value="5" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">步長 (+=)</label>
+                                <input type="number" id="step-val" value="1" min="1" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <button onclick="resetVisualization()" class="w-full bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-700 transition text-sm font-bold mb-4 shadow-md">套用設定並重設</button>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="stepPrev()" id="btn-prev" class="flex-1 bg-slate-100 text-slate-600 px-3 py-3 rounded-lg hover:bg-slate-200 disabled:opacity-40 transition font-bold text-sm">上一步</button>
+                        <button onclick="stepNext()" id="btn-next" class="flex-1 bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition font-bold text-sm shadow-md">下一步</button>
+                        <button onclick="toggleAuto()" id="btn-auto" class="flex-1 bg-orange-500 text-white px-3 py-3 rounded-lg hover:bg-orange-600 transition font-bold text-sm shadow-md">自動播放</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- [右上] 執行結果視窗 -->
-            <div class="dashboard-card-sm bg-black p-4 rounded-xl shadow-lg flex flex-col">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex space-x-2">
-                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <!-- [右側] 狀態、終端機與記憶體 (垂直對齊) -->
+            <div class="right-column">
+                <!-- 執行過程 Trace Log -->
+                <div class="trace-box bg-white p-2 rounded-xl shadow-md flex items-center justify-center relative overflow-hidden border border-slate-200">
+                    <span class="absolute top-1 left-3 text-[9px] text-slate-400 font-mono uppercase">Current Status</span>
+                    <div id="trace-log" class="text-center w-full px-4">
+                        <span class="text-slate-400 text-sm italic">準備就緒...</span>
                     </div>
-                    <span class="text-xs text-slate-500 font-mono uppercase">Console Output</span>
                 </div>
-                <div id="console-output" class="console-text text-green-400 text-xs overflow-y-auto flex-grow bg-slate-900/50 p-3 rounded border border-slate-800 leading-snug">
-                    > 準備就緒...
-                </div>
-            </div>
 
-            <!-- [左下] 參數設定與控制按鈕 -->
-            <div class="dashboard-card-lg bg-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
-                <div>
-                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-wider">控制與參數設定</h2>
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">起始值</label>
-                            <input type="number" id="start-val" value="0" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">終止值 (&lt;)</label>
-                            <input type="number" id="end-val" value="5" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">步長 (+=)</label>
-                            <input type="number" id="step-val" value="1" min="1" class="w-full border-slate-200 border rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
+                <!-- Terminal Output (反映 endl 換行) -->
+                <div class="terminal-box bg-black p-4 rounded-xl shadow-lg flex flex-col relative overflow-hidden border-2 border-slate-700">
+                    <span class="absolute top-1 right-3 text-[10px] text-slate-500 font-mono uppercase">Terminal Output</span>
+                    <div id="terminal-output" class="console-text text-green-400 text-xl overflow-y-auto flex-grow pt-2 font-bold tracking-widest leading-relaxed">
                     </div>
-                    <button onclick="resetVisualization()" class="w-full bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-700 transition text-sm font-bold mb-4">套用設定並重設</button>
                 </div>
-                
-                <div class="flex gap-2">
-                    <button onclick="stepPrev()" id="btn-prev" class="flex-1 bg-slate-100 text-slate-600 px-3 py-3 rounded-lg hover:bg-slate-200 disabled:opacity-40 transition font-bold text-sm">上一步</button>
-                    <button onclick="stepNext()" id="btn-next" class="flex-1 bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition font-bold text-sm">下一步</button>
-                    <button onclick="toggleAuto()" id="btn-auto" class="flex-1 bg-orange-500 text-white px-3 py-3 rounded-lg hover:bg-orange-600 transition font-bold text-sm">自動播放</button>
-                </div>
-            </div>
 
-            <!-- [右下] RAM 記憶體狀態 -->
-            <div class="dashboard-card-lg bg-white p-6 rounded-xl shadow-lg flex flex-col">
-                <h2 class="text-sm font-bold text-slate-400 uppercase mb-4 tracking-wider">RAM 記憶體狀態</h2>
-                <div class="flex-grow flex flex-col items-center justify-center">
-                    <div class="relative">
-                        <div class="text-center mb-1">
-                            <span id="mem-label" class="text-xs font-bold text-blue-600 font-mono">int i</span>
+                <!-- RAM 記憶體狀態 -->
+                <div class="dashboard-card-ram bg-white p-5 rounded-xl shadow-lg flex flex-col border-t-4 border-blue-600">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase mb-2 tracking-wider">RAM 記憶體狀態</h2>
+                    <div class="flex-grow flex items-center justify-around">
+                        <div class="text-center">
+                            <div class="mb-1">
+                                <span id="mem-label" class="text-xs font-bold text-blue-600 font-mono">int i</span>
+                            </div>
+                            <div id="mem-cell" class="memory-cell w-20 h-20 border-4 border-slate-800 rounded-xl flex items-center justify-center text-3xl font-mono shadow-md bg-slate-50 relative overflow-hidden">
+                                <div id="mem-bar" class="absolute top-0 left-0 w-full h-1 bg-slate-800"></div>
+                                <span id="mem-value">-</span>
+                            </div>
                         </div>
-                        <div id="mem-cell" class="memory-cell w-28 h-28 border-4 border-slate-800 rounded-xl flex items-center justify-center text-4xl font-mono shadow-xl bg-slate-50 relative overflow-hidden">
-                            <div id="mem-bar" class="absolute top-0 left-0 w-full h-1 bg-slate-800"></div>
-                            <span id="mem-value">-</span>
-                        </div>
-                        <div class="text-center mt-2">
-                            <span id="mem-addr" class="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">Addr: 0x7FFD2B</span>
+                        <div class="flex flex-col gap-1">
+                            <span id="mem-addr" class="text-[9px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded w-fit">Addr: 0x7FFD2B</span>
+                            <p id="mem-desc" class="text-[10px] text-slate-500 leading-tight italic max-w-[140px]">變數 i 在 Stack 中的即時變化</p>
                         </div>
                     </div>
-                    <p id="mem-desc" class="text-[11px] text-slate-400 mt-6 text-center italic">顯示變數 i 在堆棧 (Stack) 中的即時數值變化</p>
                 </div>
             </div>
 
         </div>
 
         <footer class="mt-6 text-center text-slate-400 text-xs">
-            <p>提示：在 C++ 中，定義在 for 括號內的變數，其生命週期在跳出迴圈後即結束。</p>
+            <p>提示：觀察 Trace Log 顏色與程式碼高亮區塊的對應關係。</p>
         </footer>
     </div>
 
@@ -145,6 +185,14 @@
             END: 'END'
         };
 
+        const TAG_CLASSES = {
+            [STEP_TYPES.INIT]: 'tag-init',
+            [STEP_TYPES.CHECK]: 'tag-check',
+            [STEP_TYPES.BODY]: 'tag-body',
+            [STEP_TYPES.UPDATE]: 'tag-update',
+            [STEP_TYPES.END]: 'tag-end'
+        };
+
         function updateUI() {
             document.querySelectorAll('.code-line, #code-init, #code-cond, #code-update').forEach(el => {
                 el.classList.remove('highlight');
@@ -156,33 +204,33 @@
             const memBar = document.getElementById('mem-bar');
             const memAddr = document.getElementById('mem-addr');
             const memDesc = document.getElementById('mem-desc');
-            const consoleDiv = document.getElementById('console-output');
+            const traceLog = document.getElementById('trace-log');
+            const terminalOutput = document.getElementById('terminal-output');
 
             const currentStep = state.history[state.stepIndex];
             
-            // 恢復 RAM 預設樣式
             memCell.classList.remove('destroyed');
             memLabel.classList.remove('text-red-500');
             memLabel.classList.add('text-blue-600');
             memBar.classList.replace('bg-red-500', 'bg-slate-800');
             memAddr.style.visibility = 'visible';
-            memDesc.innerText = "顯示變數 i 在堆棧 (Stack) 中的即時數值變化";
+            memDesc.innerText = "變數 i 在 Stack 中的即時變化";
 
             if (!currentStep) {
                 memValue.innerText = "-";
-                consoleDiv.innerHTML = "> 準備就緒...";
+                traceLog.innerHTML = `<span class="text-slate-400 text-sm italic">準備就緒...</span>`;
+                terminalOutput.innerHTML = "";
                 document.getElementById('btn-prev').disabled = true;
                 return;
             }
 
-            // 更新記憶體內容
             if (currentStep.type === STEP_TYPES.END) {
-                memValue.innerHTML = "<span class='text-lg'>NULL</span>";
+                memValue.innerHTML = "<span class='text-sm text-red-400'>VOID</span>";
                 memCell.classList.add('destroyed');
                 memLabel.classList.replace('text-blue-600', 'text-red-500');
                 memBar.classList.replace('bg-slate-800', 'bg-red-500');
                 memAddr.style.visibility = 'hidden';
-                memDesc.innerHTML = "<b class='text-red-500 underline'>OutOfScope</b>: 變數 i 已從 Stack 中銷毀";
+                memDesc.innerHTML = "<b class='text-red-500 underline'>OutOfScope</b>: 已銷毀";
             } else {
                 memValue.innerText = currentStep.i === null ? "?" : currentStep.i;
                 if (currentStep.type === STEP_TYPES.UPDATE || currentStep.type === STEP_TYPES.INIT) {
@@ -191,7 +239,6 @@
                 }
             }
 
-            // 高亮程式碼
             switch (currentStep.type) {
                 case STEP_TYPES.INIT: document.getElementById('code-init').classList.add('highlight'); break;
                 case STEP_TYPES.CHECK: document.getElementById('code-cond').classList.add('highlight'); break;
@@ -199,8 +246,12 @@
                 case STEP_TYPES.UPDATE: document.getElementById('code-update').classList.add('highlight'); break;
             }
 
-            consoleDiv.innerHTML = currentStep.logs.map(line => `<span class="opacity-40">#</span> ${line}`).join('<br>');
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            const lastLog = currentStep.logs[currentStep.logs.length - 1];
+            traceLog.innerHTML = `<div class="log-tag ${TAG_CLASSES[currentStep.type]}">${lastLog}</div>`;
+
+            // 更新 Terminal Output，反映 endl (使用 <br> 換行)
+            terminalOutput.innerHTML = currentStep.terminal.join('<br>');
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
 
             document.getElementById('code-init').innerText = `int i = ${state.params.start}`;
             document.getElementById('code-cond').innerText = `i < ${state.params.end}`;
@@ -212,36 +263,42 @@
 
         function generateNextState() {
             let lastState = state.stepIndex === -1 ? 
-                { i: null, type: null, logs: [] } : 
+                { i: null, type: null, logs: [], terminal: [] } : 
                 state.history[state.stepIndex];
             
-            let next = { i: lastState.i, logs: [...lastState.logs], type: '' };
+            let next = { 
+                i: lastState.i, 
+                logs: [...lastState.logs], 
+                terminal: [...lastState.terminal],
+                type: '' 
+            };
 
             if (state.stepIndex === -1) {
                 next.type = STEP_TYPES.INIT;
                 next.i = state.params.start;
-                next.logs.push(`初始化 i = ${next.i}`);
+                next.logs.push(`初始化: i = ${next.i}`);
             } else {
                 switch (lastState.type) {
                     case STEP_TYPES.INIT:
                     case STEP_TYPES.UPDATE:
                         next.type = STEP_TYPES.CHECK;
                         const isTrue = next.i < state.params.end;
-                        next.logs.push(`檢查 ${next.i} < ${state.params.end} ? ${isTrue ? 'True' : 'False'}`);
+                        next.logs.push(`檢查: ${next.i} < ${state.params.end} ? ${isTrue ? 'True' : 'False'}`);
                         if (!isTrue) {
                             next.type = STEP_TYPES.END;
-                            next.logs.push(`跳出迴圈，銷毀變數 i。`);
+                            next.logs.push(`結束: 跳出並銷毀 i`);
                         }
                         break;
                     case STEP_TYPES.CHECK:
                         next.type = STEP_TYPES.BODY;
-                        next.logs.push(`輸出: ${next.i}`);
+                        next.logs.push(`執行: 輸出 ${next.i}`);
+                        next.terminal.push(next.i);
                         break;
                     case STEP_TYPES.BODY:
                         next.type = STEP_TYPES.UPDATE;
                         const prevI = next.i;
                         next.i += state.params.step;
-                        next.logs.push(`更新 i: ${prevI} &rarr; ${next.i}`);
+                        next.logs.push(`遞增: ${prevI} → ${next.i}`);
                         break;
                 }
             }
@@ -285,7 +342,7 @@
 
         function resetVisualization() {
             state.params.start = parseInt(document.getElementById('start-val').value) || 0;
-            state.params.end = parseInt(document.getElementById('end-val').value) || 0;
+            state.params.end = parseInt(document.getElementById('end-val').value) || 5;
             state.params.step = parseInt(document.getElementById('step-val').value) || 1;
             state.stepIndex = -1;
             state.history = [];
