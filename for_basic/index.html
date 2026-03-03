@@ -39,39 +39,37 @@
             height: 320px;
         }
 
-        /* 右上角與右下角佈局調整 */
+        /* 右側佈局高度固定 524px (與左側 180+24+320 對齊) */
         .right-column {
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
-            height: 524px; /* 180 (sm) + 24 (gap) + 320 (lg) */
+            height: 524px;
         }
 
+        /* Trace Box 顏色動態變化 */
         .trace-box {
             height: 70px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .terminal-box {
-            flex-grow: 1; /* 自動填滿剩餘空間 */
+            flex-grow: 1; 
             min-height: 180px;
         }
         .dashboard-card-ram {
             height: 180px;
         }
 
-        /* Trace Log 動態顏色標籤 */
-        .log-tag {
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            display: inline-block;
-            font-size: 13px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .tag-init { background-color: #3b82f6; color: white; } 
-        .tag-check { background-color: #a855f7; color: white; } 
-        .tag-body { background-color: #ffffff; color: #1e293b; border: 1px solid #e2e8f0; } 
-        .tag-update { background-color: #22c55e; color: white; } 
-        .tag-end { background-color: #ef4444; color: white; }
+        /* 狀態背景顏色定義 */
+        .bg-init { background-color: #3b82f6; color: white; }
+        .bg-check { background-color: #a855f7; color: white; }
+        .bg-body { background-color: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; }
+        .bg-update { background-color: #22c55e; color: white; }
+        .bg-end { background-color: #ef4444; color: white; }
+        .bg-ready { background-color: white; color: #94a3b8; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
@@ -123,13 +121,13 @@
                 </div>
             </div>
 
-            <!-- [右側] 狀態、終端機與記憶體 (垂直對齊) -->
+            <!-- [右側] 狀態、終端機與記憶體 -->
             <div class="right-column">
-                <!-- 執行過程 Trace Log -->
-                <div class="trace-box bg-white p-2 rounded-xl shadow-md flex items-center justify-center relative overflow-hidden border border-slate-200">
-                    <span class="absolute top-1 left-3 text-[9px] text-slate-400 font-mono uppercase">Current Status</span>
-                    <div id="trace-log" class="text-center w-full px-4">
-                        <span class="text-slate-400 text-sm italic">準備就緒...</span>
+                <!-- 執行過程 Trace Log (直接切換背景色) -->
+                <div id="trace-container" class="trace-box bg-ready rounded-xl shadow-md relative overflow-hidden border border-slate-200">
+                    <span id="trace-label" class="absolute top-1 left-3 text-[9px] font-mono uppercase opacity-60">Current Status</span>
+                    <div id="trace-text" class="text-center w-full px-4 font-bold text-lg">
+                        準備就緒...
                     </div>
                 </div>
 
@@ -164,7 +162,7 @@
         </div>
 
         <footer class="mt-6 text-center text-slate-400 text-xs">
-            <p>提示：觀察 Trace Log 顏色與程式碼高亮區塊的對應關係。</p>
+            <p>提示：觀察背景顏色變化與程式碼執行步驟的對應關係。</p>
         </footer>
     </div>
 
@@ -185,12 +183,12 @@
             END: 'END'
         };
 
-        const TAG_CLASSES = {
-            [STEP_TYPES.INIT]: 'tag-init',
-            [STEP_TYPES.CHECK]: 'tag-check',
-            [STEP_TYPES.BODY]: 'tag-body',
-            [STEP_TYPES.UPDATE]: 'tag-update',
-            [STEP_TYPES.END]: 'tag-end'
+        const BG_CLASSES = {
+            [STEP_TYPES.INIT]: 'bg-init',
+            [STEP_TYPES.CHECK]: 'bg-check',
+            [STEP_TYPES.BODY]: 'bg-body',
+            [STEP_TYPES.UPDATE]: 'bg-update',
+            [STEP_TYPES.END]: 'bg-end'
         };
 
         function updateUI() {
@@ -204,11 +202,14 @@
             const memBar = document.getElementById('mem-bar');
             const memAddr = document.getElementById('mem-addr');
             const memDesc = document.getElementById('mem-desc');
-            const traceLog = document.getElementById('trace-log');
+            const traceContainer = document.getElementById('trace-container');
+            const traceText = document.getElementById('trace-text');
+            const traceLabel = document.getElementById('trace-label');
             const terminalOutput = document.getElementById('terminal-output');
 
             const currentStep = state.history[state.stepIndex];
             
+            // 初始狀態還原
             memCell.classList.remove('destroyed');
             memLabel.classList.remove('text-red-500');
             memLabel.classList.add('text-blue-600');
@@ -218,12 +219,15 @@
 
             if (!currentStep) {
                 memValue.innerText = "-";
-                traceLog.innerHTML = `<span class="text-slate-400 text-sm italic">準備就緒...</span>`;
+                traceContainer.className = "trace-box bg-ready rounded-xl shadow-md relative overflow-hidden border border-slate-200";
+                traceText.innerText = "準備就緒...";
+                traceLabel.style.color = "";
                 terminalOutput.innerHTML = "";
                 document.getElementById('btn-prev').disabled = true;
                 return;
             }
 
+            // 更新記憶體
             if (currentStep.type === STEP_TYPES.END) {
                 memValue.innerHTML = "<span class='text-sm text-red-400'>VOID</span>";
                 memCell.classList.add('destroyed');
@@ -239,6 +243,7 @@
                 }
             }
 
+            // 高亮代碼
             switch (currentStep.type) {
                 case STEP_TYPES.INIT: document.getElementById('code-init').classList.add('highlight'); break;
                 case STEP_TYPES.CHECK: document.getElementById('code-cond').classList.add('highlight'); break;
@@ -246,10 +251,15 @@
                 case STEP_TYPES.UPDATE: document.getElementById('code-update').classList.add('highlight'); break;
             }
 
+            // 更新 Trace Container 背景與文字
+            traceContainer.className = `trace-box ${BG_CLASSES[currentStep.type]} rounded-xl shadow-md relative overflow-hidden`;
             const lastLog = currentStep.logs[currentStep.logs.length - 1];
-            traceLog.innerHTML = `<div class="log-tag ${TAG_CLASSES[currentStep.type]}">${lastLog}</div>`;
+            traceText.innerText = lastLog;
+            
+            // 控制 Label 的對比度
+            traceLabel.style.color = (currentStep.type === STEP_TYPES.BODY) ? "#94a3b8" : "white";
 
-            // 更新 Terminal Output，反映 endl (使用 <br> 換行)
+            // 更新 Terminal Output
             terminalOutput.innerHTML = currentStep.terminal.join('<br>');
             terminalOutput.scrollTop = terminalOutput.scrollHeight;
 
@@ -281,18 +291,22 @@
                 switch (lastState.type) {
                     case STEP_TYPES.INIT:
                     case STEP_TYPES.UPDATE:
+                        // 這是修正點：INIT 或 UPDATE 之後必定接 CHECK
                         next.type = STEP_TYPES.CHECK;
                         const isTrue = next.i < state.params.end;
-                        next.logs.push(`檢查: ${next.i} < ${state.params.end} ? ${isTrue ? 'True' : 'False'}`);
-                        if (!isTrue) {
-                            next.type = STEP_TYPES.END;
-                            next.logs.push(`結束: 跳出並銷毀 i`);
-                        }
+                        next.logs.push(`檢查: ${next.i} < ${state.params.end} ? ${isTrue ? '成立' : '不成立'}`);
+                        // 標記一下，如果檢查不成立，下一步會進入 END
+                        next._checkFailed = !isTrue;
                         break;
                     case STEP_TYPES.CHECK:
-                        next.type = STEP_TYPES.BODY;
-                        next.logs.push(`執行: 輸出 ${next.i}`);
-                        next.terminal.push(next.i);
+                        if (lastState._checkFailed) {
+                            next.type = STEP_TYPES.END;
+                            next.logs.push(`結束: 條件不成立，跳出迴圈並銷毀 i`);
+                        } else {
+                            next.type = STEP_TYPES.BODY;
+                            next.logs.push(`執行: 輸出 ${next.i}`);
+                            next.terminal.push(next.i);
+                        }
                         break;
                     case STEP_TYPES.BODY:
                         next.type = STEP_TYPES.UPDATE;
