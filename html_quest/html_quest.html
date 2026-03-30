@@ -1,0 +1,519 @@
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#game{padding:1rem 0;max-width:760px;margin:auto;font-family:'Courier New',monospace}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:1rem}
+.logo{width:38px;height:38px;background:#534AB7;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:500;font-size:15px;flex-shrink:0}
+.hdr-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.hdr-sub{font-size:12px;color:var(--color-text-secondary)}
+.prog-bar{height:4px;background:var(--color-background-secondary);border-radius:2px;margin-bottom:1rem}
+.prog-fill{height:100%;background:#534AB7;border-radius:2px;transition:width .4s}
+.nav-dots{display:flex;gap:5px;margin-bottom:1.25rem;flex-wrap:wrap}
+.dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:0.5px solid var(--color-border-secondary);color:var(--color-text-secondary);cursor:pointer;transition:background .15s}
+.dot:hover{background:var(--color-background-secondary)}
+.dot.done{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.dot.active{background:#534AB7;border-color:#534AB7;color:#fff}
+.dot.done:hover{background:#0F6E56}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:var(--border-radius-md);margin-bottom:.75rem}
+.bdg-s{background:#EEEDFE;color:#3C3489}
+.bdg-b{background:#E6F1FB;color:#0C447C}
+h2{font-size:17px;font-weight:500;color:var(--color-text-primary);margin-bottom:.5rem}
+p{font-size:14px;color:var(--color-text-secondary);line-height:1.7;margin-bottom:.6rem}
+code{font-family:'Courier New',monospace;font-size:12px;background:var(--color-background-secondary);padding:2px 5px;border-radius:4px;color:var(--color-text-primary)}
+.cb{background:#F1EFE8;border:0.5px solid #D3D1C7;border-radius:var(--border-radius-md);padding:.85rem 1rem;margin:.6rem 0;font-family:'Courier New',monospace;font-size:12px;line-height:2;white-space:pre;overflow-x:auto;color:#2C2C2A}
+.t{color:#534AB7}.a{color:#0F6E56}.v{color:#993C1D}.cm{color:#888780}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.preview{background:#fff;border:0.5px solid #D3D1C7;border-radius:var(--border-radius-md);padding:.85rem 1rem;font-family:sans-serif;font-size:13px;color:#2C2C2A;min-height:80px}
+.preview h1{font-size:18px;font-weight:700;margin-bottom:4px;color:#2C2C2A}
+.preview h2{font-size:15px;font-weight:600;margin-bottom:3px;color:#2C2C2A;border:none;padding:0}
+.preview h3{font-size:13px;font-weight:600;color:#2C2C2A;border:none;padding:0}
+.preview p{font-size:12px;color:#444;margin-bottom:4px;line-height:1.5}
+.preview a{color:#185FA5;text-decoration:underline;font-size:12px}
+.preview img{max-width:100%;border:1px dashed #aaa;border-radius:4px;padding:4px;font-size:11px;color:#888;display:block}
+.preview ul{padding-left:18px;font-size:12px;color:#444}
+.preview ol{padding-left:18px;font-size:12px;color:#444}
+.preview li{margin-bottom:2px}
+.preview table{border-collapse:collapse;font-size:12px;width:100%}
+.preview th{background:#EEEDFE;border:1px solid #AFA9EC;padding:4px 8px;font-weight:600;color:#3C3489}
+.preview td{border:1px solid #D3D1C7;padding:4px 8px;color:#444}
+.preview .nav-demo{background:#534AB7;padding:6px 10px;border-radius:4px;display:flex;gap:8px}
+.preview .nav-demo a{color:#fff;font-size:11px;text-decoration:none;padding:2px 6px;border-radius:3px}
+.preview .nav-demo a.active-link{background:rgba(255,255,255,.25)}
+.preview .id-box{border:2px solid #534AB7;border-radius:4px;padding:4px 8px;margin-bottom:4px;font-size:11px;color:#3C3489}
+.preview .class-box{border:1.5px dashed #1D9E75;border-radius:4px;padding:3px 7px;margin-bottom:3px;font-size:11px;color:#085041;display:inline-block}
+.preview-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.opts{display:flex;flex-direction:column;gap:7px;margin:.75rem 0}
+.opt{padding:9px 13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;color:var(--color-text-primary);background:var(--color-background-primary);text-align:left;font-family:'Courier New',monospace;line-height:1.5}
+.opt:hover:not([disabled]){background:var(--color-background-secondary)}
+.opt.ok{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.opt.ng{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
+.fb{font-size:13px;padding:8px 12px;border-radius:var(--border-radius-md);margin-top:.5rem;line-height:1.6}
+.fb.ok{background:#E1F5EE;color:#085041}
+.fb.ng{background:#FCEBEB;color:#A32D2D}
+.btn{padding:8px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;font-weight:500;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary);font-family:'Courier New',monospace;margin-right:6px;margin-top:.5rem}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.pri{background:#534AB7;border-color:#534AB7;color:#fff}
+.btn.pri:hover{background:#3C3489}
+.drop-zone{min-height:44px;padding:7px;border:1.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);display:flex;flex-wrap:wrap;gap:5px;margin:.4rem 0}
+.drop-zone.hl{border-color:#534AB7;background:#EEEDFE}
+.chip{display:inline-flex;align-items:center;padding:5px 11px;border-radius:20px;font-size:12px;font-weight:500;cursor:grab;user-select:none;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:'Courier New',monospace}
+.chip:active{cursor:grabbing;opacity:.6}
+.inp{font-family:'Courier New',monospace;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:4px;padding:3px 8px;background:var(--color-background-primary);color:var(--color-text-primary);vertical-align:middle}
+.inp:focus{outline:none;border-color:#534AB7}
+.match-row{display:flex;gap:8px;align-items:center;margin:.4rem 0;flex-wrap:wrap}
+.match-sel{font-family:'Courier New',monospace;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:4px 8px;background:var(--color-background-primary);color:var(--color-text-primary)}
+.match-sel:focus{outline:none;border-color:#534AB7}
+.hint-box{background:#FAEEDA;border:0.5px solid #EF9F27;border-radius:var(--border-radius-md);padding:.6rem .85rem;margin:.5rem 0;font-size:12px;color:#633806}
+.bs4-box{background:#E6F1FB;border:0.5px solid #85B7EB;border-radius:var(--border-radius-md);padding:.85rem 1rem;margin:.6rem 0}
+.bs4-table{width:100%;font-size:12px;border-collapse:collapse}
+.bs4-table td{padding:5px 4px;border-bottom:0.5px solid #B5D4F4}
+.bs4-table tr:last-child td{border-bottom:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:.75rem 0}
+.mini-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem}
+.mini-label{color:var(--color-text-secondary);font-size:11px;margin-bottom:4px}
+.mini-val{font-weight:500;color:var(--color-text-primary);font-size:13px}
+.star{width:22px;height:22px;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);display:inline-block}
+.score-pill{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:20px;padding:4px 14px;font-size:13px;color:var(--color-text-secondary)}
+</style>
+
+<div id="game">
+  <div class="hdr">
+    <div class="logo">&lt;/&gt;</div>
+    <div style="flex:1">
+      <div class="hdr-title">HTML 闖關探險</div>
+      <div class="hdr-sub">8 關卡 × 多元題型 → 銜接 BeautifulSoup</div>
+    </div>
+    <div class="score-pill" id="score-disp">得分 0</div>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div class="nav-dots" id="nav-dots"></div>
+  <div id="scene"></div>
+</div>
+
+<script>
+var G={cur:0,score:0,best:[0,0,0,0,0,0,0,0],done:[false,false,false,false,false,false,false,false]};
+var NAMES=['HTML基礎','文件骨架','標題段落','連結圖片','清單標籤','表格結構','class/id','BS4銜接'];
+
+function updateNav(){
+  var dots=document.getElementById('nav-dots');
+  dots.innerHTML=NAMES.map(function(n,i){
+    var cls=G.done[i]?'done':i===G.cur?'active':'';
+    return '<div class="dot '+cls+'" onclick="navTo('+i+')" title="'+n+'">'+
+      (G.done[i]?'&#10003;':i+1)+'</div>';
+  }).join('');
+  document.getElementById('prog').style.width=Math.round(G.done.filter(Boolean).length/8*100)+'%';
+  document.getElementById('score-disp').textContent='得分 '+G.score;
+}
+
+function navTo(i){G.cur=i;updateNav();show(i);}
+
+function show(i){
+  var fns=[rInfo,rOrder,rHeadings,rMatchAttr,rFillList,rTableBuilder,rClassId,rBs4Quiz];
+  document.getElementById('scene').innerHTML=(i<8?fns[i]():rWin());
+  bindDrag();
+}
+
+function advance(){
+  if(G.cur<7){G.cur++;updateNav();show(G.cur);}
+  else{updateNav();document.getElementById('scene').innerHTML=rWin();}
+}
+
+function award(stageIdx,pts){
+  var prev=G.best[stageIdx]||0;
+  if(pts>prev){G.score+=pts-prev;G.best[stageIdx]=pts;}
+  G.done[stageIdx]=true;
+  updateNav();
+}
+
+function mkOpts(list,handler){
+  return '<div class="opts">'+list.map(function(o,i){
+    return '<button class="opt" id="opt_'+i+'" onclick="'+handler+'('+i+')">'+o+'</button>';
+  }).join('')+'</div>';
+}
+
+function resolveOpts(ans,chosen,fbId,okMsg){
+  for(var i=0;i<20;i++){var b=document.getElementById('opt_'+i);if(!b)break;b.disabled=true;}
+  var ok=document.getElementById('opt_'+ans);if(ok)ok.classList.add('ok');
+  if(chosen!==ans){var ng=document.getElementById('opt_'+chosen);if(ng)ng.classList.add('ng');}
+  var fb=document.getElementById(fbId);
+  if(fb)fb.innerHTML='<div class="fb '+(chosen===ans?'ok':'ng')+'">'+(chosen===ans?'答對！':'答錯。')+okMsg+'</div>';
+  return chosen===ans;
+}
+
+function rInfo(){
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 1 / 8　HTML 是什麼？</span>'+
+    '<h2>網頁的骨架語言</h2>'+
+    '<p>HTML（HyperText Markup Language）用「標籤（tag）」描述網頁結構。瀏覽器讀取後渲染成你看到的頁面。</p>'+
+    '<div class="cb"><span class="t">&lt;h1&gt;</span>大標題<span class="t">&lt;/h1&gt;</span>\n<span class="t">&lt;p&gt;</span>段落文字<span class="t">&lt;/p&gt;</span>\n<span class="t">&lt;img</span> <span class="a">src</span>=<span class="v">"photo.jpg"</span> <span class="a">alt</span>=<span class="v">"描述"</span><span class="t">&gt;</span>  <span class="cm">&lt;!-- 自閉合 --&gt;</span></div>'+
+    '<p>標籤三要素：<code>&lt;開頭&gt;</code> → 內容 → <code>&lt;/結尾&gt;</code>。屬性放在開頭標籤裡，格式 <code>名稱="值"</code>。</p>'+
+    '<div class="row2">'+
+      '<div class="mini-card"><div class="mini-label">開頭標籤</div><div class="mini-val">&lt;p&gt;</div></div>'+
+      '<div class="mini-card"><div class="mini-label">結尾標籤</div><div class="mini-val">&lt;/p&gt;</div></div>'+
+      '<div class="mini-card"><div class="mini-label">屬性範例</div><div class="mini-val">href="url"</div></div>'+
+      '<div class="mini-card"><div class="mini-label">自閉合</div><div class="mini-val">&lt;img&gt; &lt;br&gt;</div></div>'+
+    '</div><br>'+
+    '<button class="btn pri" onclick="award(0,10);setTimeout(advance,200)">我懂了，下一關 →</button>'+
+  '</div>';
+}
+
+var ORDER_ITEMS=['&lt;!DOCTYPE html&gt;','&lt;html lang="zh-TW"&gt;','&lt;head&gt;','&lt;title&gt;我的網頁&lt;/title&gt;','&lt;/head&gt;','&lt;body&gt;','&lt;h1&gt;Hello&lt;/h1&gt;','&lt;/body&gt;','&lt;/html&gt;'];
+var ORDER_HINTS=['宣告 HTML5（必須第一行）','根元素','放 meta/title/CSS','分頁標題','關閉 head','所有可見內容','頁面大標題','關閉 body','關閉根元素'];
+var ORDER_SHUFFLE=[6,2,0,5,4,1,8,3,7];
+
+function rOrder(){
+  var chips=ORDER_SHUFFLE.map(function(i){
+    return '<span class="chip" draggable="true" data-idx="'+i+'" title="'+ORDER_HINTS[i]+'">'+ORDER_ITEMS[i]+'</span>';
+  }).join('');
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 2 / 8　文件骨架</span>'+
+    '<h2>拖拉排序：組合標準 HTML 文件</h2>'+
+    '<p>將下方標籤拖到「正確順序區」，懸停可看提示。</p>'+
+    '<div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:4px">正確順序區（由上到下）</div>'+
+    '<div class="drop-zone" id="drop-zone" style="flex-direction:column;min-height:48px"></div>'+
+    '<div style="font-size:11px;color:var(--color-text-secondary);margin:.6rem 0 4px">標籤庫</div>'+
+    '<div class="drop-zone" id="chip-zone" style="border-style:solid">'+chips+'</div>'+
+    '<div id="order-fb"></div><br>'+
+    '<button class="btn pri" onclick="checkOrder()">確認順序</button>'+
+    '<button class="btn" onclick="resetOrder()">重置</button>'+
+  '</div>';
+}
+
+function bindDrag(){
+  setTimeout(function(){
+    var cz=document.getElementById('chip-zone');
+    var dz=document.getElementById('drop-zone');
+    if(!cz||!dz)return;
+    var dragged=null;
+    document.querySelectorAll('.chip').forEach(function(c){
+      c.addEventListener('dragstart',function(){dragged=c;setTimeout(function(){c.style.opacity='.4';},0);});
+      c.addEventListener('dragend',function(){if(dragged)dragged.style.opacity='1';dragged=null;});
+    });
+    [cz,dz].forEach(function(zone){
+      zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('hl');});
+      zone.addEventListener('dragleave',function(){zone.classList.remove('hl');});
+      zone.addEventListener('drop',function(e){e.preventDefault();zone.classList.remove('hl');if(dragged)zone.appendChild(dragged);});
+    });
+  },80);
+}
+
+function checkOrder(){
+  var dz=document.getElementById('drop-zone');
+  if(!dz)return;
+  var indices=[].slice.call(dz.querySelectorAll('.chip')).map(function(c){return parseInt(c.dataset.idx);});
+  var fb=document.getElementById('order-fb');
+  if(JSON.stringify(indices)===JSON.stringify([0,1,2,3,4,5,6,7,8])){
+    fb.innerHTML='<div class="fb ok">完美！DOCTYPE→html→head→title→/head→body→h1→/body→/html</div>';
+    award(1,20);setTimeout(advance,1500);
+  } else {
+    fb.innerHTML='<div class="fb ng">順序有誤！提示：DOCTYPE 第一，head 在 body 之前，title 在 head 裡。</div>';
+  }
+}
+function resetOrder(){
+  var cz=document.getElementById('chip-zone');
+  [].slice.call(document.querySelectorAll('#drop-zone .chip')).forEach(function(c){cz.appendChild(c);});
+  document.getElementById('order-fb').innerHTML='';
+}
+
+var hIdx=0,hScore=0;
+var hPool=[
+  {q:'哪個標籤代表「最大的標題」？',opts:['&lt;h6&gt;','&lt;h1&gt;','&lt;title&gt;','&lt;big&gt;'],ans:1,exp:'h1~h6 表示標題層級，h1 最大。&lt;title&gt; 是分頁名稱，不顯示在頁面內容中。'},
+  {q:'&lt;p&gt; 標籤的用途是？',opts:['插入圖片','建立段落文字','建立超連結','定義清單'],ans:1,exp:'p = paragraph（段落），是最常見的文字容器標籤。'}
+];
+function rHeadings(){hIdx=0;hScore=0;return buildHQ(0);}
+function buildHQ(i){
+  var q=hPool[i];
+  var preview='<div class="preview-label">瀏覽器渲染結果</div><div class="preview">'+
+    '<h1>一級標題 h1</h1><h2>二級標題 h2</h2><h3>三級標題 h3</h3><p>段落 p 標籤的文字內容</p>'+
+  '</div>';
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 3 / 8　標題與段落　第 '+(i+1)+'/'+hPool.length+' 題</span>'+
+    '<h2>'+q.q+'</h2>'+
+    '<div class="two-col">'+
+      '<div><div class="cb">'+
+        '<span class="t">&lt;h1&gt;</span>一級標題 h1<span class="t">&lt;/h1&gt;</span>\n'+
+        '<span class="t">&lt;h2&gt;</span>二級標題 h2<span class="t">&lt;/h2&gt;</span>\n'+
+        '<span class="t">&lt;h3&gt;</span>三級標題 h3<span class="t">&lt;/h3&gt;</span>\n'+
+        '<span class="t">&lt;p&gt;</span>段落文字<span class="t">&lt;/p&gt;</span>'+
+      '</div></div>'+
+      '<div>'+preview+'</div>'+
+    '</div>'+
+    '<div class="opts">'+q.opts.map(function(o,j){return '<button class="opt" id="opt_'+j+'" onclick="checkHQ('+j+','+i+')">'+o+'</button>';}).join('')+'</div>'+
+    '<div id="hq-fb"></div>'+
+  '</div>';
+}
+function checkHQ(chosen,i){
+  var q=hPool[i];
+  var correct=resolveOpts(q.ans,chosen,'hq-fb',q.exp);
+  if(correct)hScore+=15;
+  setTimeout(function(){
+    if(i+1<hPool.length){document.getElementById('scene').innerHTML=buildHQ(i+1);}
+    else{award(2,hScore);advance();}
+  },1500);
+}
+
+function rMatchAttr(){
+  var rows=[
+    {c:'<span class="t">&lt;a</span> <span class="a">href</span>=<span class="v">"https://google.com"</span><span class="t">&gt;</span>前往 Google<span class="t">&lt;/a&gt;</span>',l:'href 屬性的作用',opts:['指定圖片路徑','指定連結網址','設定元素 ID','指定字型'],ans:'1'},
+    {c:'<span class="t">&lt;img</span> <span class="a">src</span>=<span class="v">"cat.jpg"</span><span class="t">&gt;</span>',l:'src 屬性的作用',opts:['指定圖片路徑','指定連結網址','設定元素 ID','指定字型'],ans:'0'},
+    {c:'<span class="t">&lt;img</span> <span class="a">alt</span>=<span class="v">"一隻貓（圖片無法載入時顯示此文字）"</span><span class="t">&gt;</span>',l:'alt 屬性的作用',opts:['設定圖片大小','替代文字（圖片失效時顯示）','設定背景顏色','指定超連結'],ans:'1'},
+    {c:'<span class="t">&lt;a</span> <span class="a">href</span>=<span class="v">"https://google.com"</span><span class="t">&gt;</span><span class="a"> target</span>=<span class="v">"_blank"</span><span class="t">&gt;</span>新分頁開啟<span class="t">&lt;/a&gt;</span>',l:'href 屬性的作用',opts:['關閉連結','在新分頁開啟連結','隱藏連結','指定連結顏色'],ans:'1'},
+
+  ];
+  var preview='<div class="preview-label">瀏覽器渲染結果</div><div class="preview">'+
+    '<p><a href="https://google.com">前往 Google</a></p>'+
+    '<img src="#" alt="一隻貓（圖片無法載入時顯示此文字）" style="padding:8px;border:1px dashed #aaa;color:#888;font-size:11px;font-style:italic">'+
+    '<p style="margin-top:6px"><a href="https://google.com" target="_blank">新分頁開啟 ↗</a></p>'+
+  '</div>';
+  var rowsHtml=rows.map(function(r,i){
+    var sel='<select class="match-sel" id="ms'+i+'"><option value="-1">選擇...</option>'+
+      r.opts.map(function(o,j){return '<option value="'+j+'">'+o+'</option>';}).join('')+'</select>';
+    return '<div class="match-row" data-ans="'+r.ans+'" data-i="'+i+'">'+
+      '<div class="cb" style="margin:0;flex:1;min-width:0;white-space:normal;font-size:11px">'+r.c+'</div>'+
+      '<span style="font-size:11px;color:var(--color-text-secondary);white-space:nowrap">'+r.l+'：</span>'+
+      sel+'</div>';
+  }).join('');
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 4 / 8　連結與圖片</span>'+
+    '<h2>配對：屬性與用途</h2>'+
+    '<div class="two-col" style="grid-template-columns: 2.2fr 0.8fr">'+
+      '<div>'+rowsHtml+'</div>'+
+      '<div>'+preview+'</div>'+
+    '</div>'+
+    '<div id="match-fb"></div><br>'+
+    '<button class="btn pri" onclick="checkMatch()">送出答案</button>'+
+  '</div>';
+}
+function checkMatch(){
+  var rows=document.querySelectorAll('.match-row');
+  var allOk=true,wrong=[];
+  rows.forEach(function(row){
+    var i=row.dataset.i,ans=row.dataset.ans;
+    var sel=document.getElementById('ms'+i);
+    if(!sel)return;
+    if(sel.value===ans){sel.style.borderColor='#1D9E75';sel.style.background='#E1F5EE';}
+    else{sel.style.borderColor='#E24B4A';sel.style.background='#FCEBEB';allOk=false;wrong.push(parseInt(i)+1);}
+  });
+  var fb=document.getElementById('match-fb');
+  if(allOk){
+    fb.innerHTML='<div class="fb ok">全部正確！href→連結網址、src→圖片路徑、alt→替代文字、target="_blank"→新分頁。</div>';
+    award(3,20);setTimeout(advance,1600);
+  } else {
+    fb.innerHTML='<div class="fb ng">第 '+wrong.join('、')+' 題有誤，再確認！</div>';
+  }
+}
+
+function rFillList(){
+  var preview='<div class="preview-label">瀏覽器渲染結果</div><div class="preview">'+
+    '<p style="font-size:11px;color:#888;margin-bottom:3px">有序 &lt;ol&gt;</p>'+
+    '<ol><li>安裝 Python</li><li>安裝 BS4</li></ol>'+
+    '<p style="font-size:11px;color:#888;margin:.5rem 0 3px">無序 &lt;ul&gt;</p>'+
+    '<ul><li>requests</li><li>BeautifulSoup</li></ul>'+
+  '</div>';
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 5 / 8　清單標籤</span>'+
+    '<h2>填空：補全清單結構</h2>'+
+    '<div class="two-col">'+
+      '<div>'+
+        '<p><code>&lt;ol&gt;</code> 有序（數字）、<code>&lt;ul&gt;</code> 無序（圓點），項目用 <code>&lt;li&gt;</code>。</p>'+
+        '<div class="cb">'+
+'<span class="cm">&lt;!-- 有編號的步驟清單 --&gt;</span>\n'+
+'<span class="t">&lt;</span><input class="inp" id="f1" placeholder="有序清單" style="width:120px"><span class="t">&gt;</span>\n'+
+'  <span class="t">&lt;li&gt;</span>安裝 Python<span class="t">&lt;/li&gt;</span>\n'+
+'  <span class="t">&lt;</span><input class="inp" id="f2" placeholder="項目" style="width:80px"><span class="t">&gt;</span>安裝 BS4<span class="t">&lt;/</span><input class="inp" id="f3" placeholder="結尾" style="width:70px"><span class="t">&gt;</span>\n'+
+'<span class="t">&lt;/</span><input class="inp" id="f4" placeholder="結尾" style="width:120px"><span class="t">&gt;</span>'+
+        '</div>'+
+        '<div id="fill-fb"></div><br>'+
+        '<button class="btn pri" onclick="checkFill()">確認答案</button>'+
+        '<button class="btn" onclick="document.getElementById(\'fill-hint\').innerHTML=\'<div class=\\\"hint-box\\\">有序=ol，無序=ul，項目=li</div>\'">提示</button>'+
+        '<div id="fill-hint"></div>'+
+      '</div>'+
+      '<div>'+preview+'</div>'+
+    '</div>'+
+  '</div>';
+}
+function checkFill(){
+  function v(id){return document.getElementById(id).value.trim().toLowerCase().replace(/[<>\/]/g,'');}
+  var ok=[v('f1')==='ol',v('f2')==='li',v('f3')==='li',v('f4')==='ol'];
+  var fb=document.getElementById('fill-fb');
+  if(ok.every(Boolean)){
+    fb.innerHTML='<div class="fb ok">完全正確！ol=有序清單，li=每個項目。</div>';
+    award(4,15);setTimeout(advance,1600);
+  } else {
+    var h=[];
+    if(!ok[0])h.push('格1：有序用 ol');
+    if(!ok[1]||!ok[2])h.push('格2/3：項目用 li');
+    if(!ok[3])h.push('格4：結尾 ol');
+    fb.innerHTML='<div class="fb ng">'+h.join('；')+'</div>';
+  }
+}
+
+var tblPhase=0,tblScore=0;
+var tblPool=[
+  {q:'&lt;table&gt; 裡的 <code>&lt;tr&gt;</code> 代表什麼？',opts:['整個表格','一列（row）','一個儲存格','表格標題'],ans:1,exp:'tr = table row，代表表格中的一列，每列包含 th 或 td 儲存格。'},
+  {q:'<code>&lt;th&gt;</code> 和 <code>&lt;td&gt;</code> 的主要差異？',opts:['th是圖片格','th是表頭格（粗體置中），td是資料格','兩者完全相同','td只能放在thead裡'],ans:1,exp:'th（table header）預設粗體置中用於欄位名；td（table data）放一般資料。'}
+];
+function rTableBuilder(){tblPhase=0;tblScore=0;return buildTblQ(0);}
+function buildTblQ(p){
+  var q=tblPool[p];
+  var preview='<div class="preview-label">瀏覽器渲染結果</div><div class="preview">'+
+    '<table><tr><th>姓名</th><th>分數</th></tr><tr><td>小明</td><td>95</td></tr><tr><td>小華</td><td>88</td></tr></table>'+
+  '</div>';
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 6 / 8　表格結構　第 '+(p+1)+'/2 題</span>'+
+    '<h2>'+q.q+'</h2>'+
+    '<div class="two-col">'+
+      '<div><div class="cb">'+
+'<span class="t">&lt;table&gt;</span>\n'+
+'  <span class="t">&lt;tr&gt;</span>  <span class="cm">&lt;!-- 一列 --&gt;</span>\n'+
+'    <span class="t">&lt;th&gt;</span>姓名<span class="t">&lt;/th&gt;</span>  <span class="cm">&lt;!-- 標題格 --&gt;</span>\n'+
+'    <span class="t">&lt;th&gt;</span>分數<span class="t">&lt;/th&gt;</span>\n'+
+'  <span class="t">&lt;/tr&gt;</span>\n'+
+'  <span class="t">&lt;tr&gt;</span>\n'+
+'    <span class="t">&lt;td&gt;</span>小明<span class="t">&lt;/td&gt;</span>  <span class="cm">&lt;!-- 資料格 --&gt;</span>\n'+
+'    <span class="t">&lt;td&gt;</span>95<span class="t">&lt;/td&gt;</span>\n'+
+'  <span class="t">&lt;/tr&gt;</span>\n'+
+'<span class="t">&lt;/table&gt;</span>'+
+      '</div></div>'+
+      '<div>'+preview+'</div>'+
+    '</div>'+
+    '<div class="opts">'+q.opts.map(function(o,j){return '<button class="opt" id="opt_'+j+'" onclick="checkTbl('+j+','+p+')">'+o+'</button>';}).join('')+'</div>'+
+    '<div id="tbl-fb"></div>'+
+  '</div>';
+}
+function checkTbl(chosen,p){
+  var q=tblPool[p];
+  var correct=resolveOpts(q.ans,chosen,'tbl-fb',q.exp);
+  if(correct)tblScore+=10;
+  setTimeout(function(){
+    if(p+1<tblPool.length){document.getElementById('scene').innerHTML=buildTblQ(p+1);}
+    else{award(5,tblScore);advance();}
+  },1500);
+}
+
+var ciIdx=0,ciScore=0;
+var ciPool=[
+  {q:'id="navbar" 在同一頁可以出現幾次？',opts:['無限次','只能一次','最多兩次'],ans:1,exp:'id 是唯一識別符，同一頁只能出現一次。爬蟲用 find(id="...") 正是利用此特性精準定位。'},
+  {q:'class="nav-link" 同時出現在三個 &lt;a&gt; 上，合法嗎？',opts:['不合法，class只能用一次','完全合法，class可重複使用'],ans:1,exp:'class 可在多個元素上重複，爬蟲用 find_all(class_="...") 可批次選取所有同 class 元素。'},
+  {q:'class="nav-link active" 表示什麼？',opts:['這是錯誤寫法','只有第一個class有效','同時套用 nav-link 和 active 兩個class'],ans:2,exp:'一個元素可同時有多個 class，空格隔開。爬蟲用 find_all(class_="nav-link") 仍可選到此元素。'}
+];
+function rClassId(){ciIdx=0;ciScore=0;return buildCiQ(0);}
+function buildCiQ(i){
+  var q=ciPool[i];
+  var preview='<div class="preview-label">瀏覽器示意（id / class 邊框僅供示意）</div><div class="preview">'+
+    '<div class="id-box">id="navbar"（唯一，紫色框）'+
+      '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">'+
+        '<span class="class-box">class="nav-link"</span>'+
+        '<span class="class-box">class="nav-link"</span>'+
+        '<span class="class-box">class="nav-link active"</span>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+  return '<div class="card">'+
+    '<span class="badge bdg-s">關卡 7 / 8　class 與 id　第 '+(i+1)+'/'+ciPool.length+' 題</span>'+
+    '<h2>'+q.q+'</h2>'+
+    '<div class="two-col">'+
+      '<div><div class="cb">'+
+'<span class="t">&lt;div</span> <span class="a">id</span>=<span class="v">"navbar"</span><span class="t">&gt;</span>\n'+
+'  <span class="t">&lt;a</span> <span class="a">class</span>=<span class="v">"nav-link"</span><span class="t">&gt;</span>首頁<span class="t">&lt;/a&gt;</span>\n'+
+'  <span class="t">&lt;a</span> <span class="a">class</span>=<span class="v">"nav-link"</span><span class="t">&gt;</span>關於<span class="t">&lt;/a&gt;</span>\n'+
+'  <span class="t">&lt;a</span> <span class="a">class</span>=<span class="v">"nav-link active"</span><span class="t">&gt;</span>聯絡<span class="t">&lt;/a&gt;</span>\n'+
+'<span class="t">&lt;/div&gt;</span>'+
+      '</div></div>'+
+      '<div>'+preview+'</div>'+
+    '</div>'+
+    '<div class="opts">'+q.opts.map(function(o,j){return '<button class="opt" id="opt_'+j+'" onclick="checkCi('+j+','+i+')">'+o+'</button>';}).join('')+'</div>'+
+    '<div id="ci-fb"></div>'+
+  '</div>';
+}
+function checkCi(chosen,i){
+  var q=ciPool[i];
+  var correct=resolveOpts(q.ans,chosen,'ci-fb',q.exp);
+  if(correct)ciScore+=10;
+  setTimeout(function(){
+    if(i+1<ciPool.length){document.getElementById('scene').innerHTML=buildCiQ(i+1);}
+    else{award(6,ciScore);advance();}
+  },1500);
+}
+
+var bs4Idx=0,bs4Score=0;
+var bs4Pool=[
+  {q:'要抓取頁面上「所有」的 &lt;a&gt; 連結，應用哪個方法？',opts:['soup.find("a")','soup.find_all("a")','soup.get("a")','soup.select_tag("a")'],ans:1,exp:'find() 只回傳第一個；find_all() 回傳包含所有符合元素的 list。'},
+  {q:'頁面有 &lt;div id="price"&gt;，BS4 如何選取？',opts:['soup.find(class_="price")','soup.find("div","price")','soup.find(id="price")','soup.get_element("price")'],ans:2,exp:'find(id="price") 精準定位唯一 id。亦可用 soup.select("#price")[0] CSS 選擇器寫法。'},
+  {q:'soup.find("a")["href"] 這行程式的意思是？',opts:['找第一個a，取其href屬性值','刪除href屬性','找出所有href','新增a標籤'],ans:0,exp:'BS4 元素支援 dict 取值，tag["屬性名"] 取屬性值，常用來取連結網址或圖片路徑。'},
+  {q:'抓所有 class="card" 的元素，BS4 正確寫法？',opts:['soup.find_all(class="card")','soup.find_all(class_="card")','soup.find_all(".card")','soup.get_all("card")'],ans:1,exp:'Python 中 class 是保留字，所以 BS4 用 class_（加底線）傳入 class 值。'}
+];
+function rBs4Quiz(){
+  bs4Idx=0;bs4Score=0;
+  return '<div class="card">'+
+    '<span class="badge bdg-b">關卡 8 / 8　BeautifulSoup 銜接</span>'+
+    '<h2>HTML 標籤 → BS4 爬蟲對照</h2>'+
+    '<div class="bs4-box">'+
+      '<table class="bs4-table">'+
+        '<tr><td style="color:#0C447C;font-weight:500">HTML 概念</td><td style="color:#0C447C;font-weight:500">BeautifulSoup 寫法</td><td style="color:#0C447C;font-weight:500">說明</td></tr>'+
+        '<tr><td><code>&lt;h1&gt;</code></td><td><code>soup.find("h1")</code></td><td style="color:#185FA5">找第一個 h1</td></tr>'+
+        '<tr><td><code>&lt;a&gt;</code> 全部</td><td><code>soup.find_all("a")</code></td><td style="color:#185FA5">找所有連結</td></tr>'+
+        '<tr><td><code>href="..."</code></td><td><code>tag["href"]</code></td><td style="color:#185FA5">取屬性值</td></tr>'+
+        '<tr><td><code>class="price"</code></td><td><code>soup.find(class_="price")</code></td><td style="color:#185FA5">依 class 選取</td></tr>'+
+        '<tr><td><code>id="main"</code></td><td><code>soup.find(id="main")</code></td><td style="color:#185FA5">依 id 選取</td></tr>'+
+        '<tr><td><code>&lt;td&gt;</code></td><td><code>soup.find_all("td")</code></td><td style="color:#185FA5">抓表格資料</td></tr>'+
+      '</table>'+
+    '</div>'+
+    '<p>完成以下 4 道實戰題：</p>'+
+    '<div id="bs4-scene">'+buildBs4Q(0)+'</div>'
+  '</div>';
+}
+
+
+function buildBs4Q(i){
+  var q=bs4Pool[i];
+  return '<div>'+
+    '<p style="font-weight:500;font-size:14px;color:var(--color-text-primary);margin-bottom:.4rem">Q'+(i+1)+' / 4　'+q.q+'</p>'+
+    '<div class="opts">'+q.opts.map(function(o,j){return '<button class="opt" id="opt_'+j+'" onclick="checkBs4('+j+','+i+')"><code>'+o+'</code></button>';}).join('')+'</div>'+
+    '<div id="bs4-fb"></div>'+
+  '</div>';
+}
+function checkBs4(chosen,i){
+  var q=bs4Pool[i];
+  var correct=resolveOpts(q.ans,chosen,'bs4-fb',q.exp);
+  if(correct)bs4Score+=15;
+  setTimeout(function(){
+    bs4Idx=i+1;
+    if(bs4Idx<bs4Pool.length){document.getElementById('bs4-scene').innerHTML=buildBs4Q(bs4Idx);}
+    else{award(7,bs4Score);advance();}
+  },1500);
+}
+
+function rWin(){
+  var total=G.best.reduce(function(a,b){return a+b;},0);
+  var stars=total>=130?3:total>=80?2:1;
+  var sh=Array(stars).fill('<span class="star" style="background:#EF9F27"></span>').join('')+
+         Array(3-stars).fill('<span class="star" style="background:#D3D1C7"></span>').join('');
+  var msg=total>=130?'滿分！可以直接開始爬蟲實戰！':total>=80?'不錯！再複習幾個標籤就更扎實了。':'建議點圓點回頭複習，打好基礎！';
+  return '<div class="card" style="text-align:center;padding:1.5rem">'+
+    '<div style="width:52px;height:52px;background:#EEEDFE;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:20px;color:#534AB7;font-weight:500">&lt;/&gt;</div>'+
+    '<h2 style="margin-bottom:.5rem">恭喜通關！</h2>'+
+    '<p>8 關全數完成，你已具備銜接 BeautifulSoup 靜態爬蟲的 HTML 基礎。</p>'+
+    '<div style="display:flex;gap:6px;justify-content:center;margin:1rem 0">'+sh+'</div>'+
+    '<div style="font-size:22px;font-weight:500;color:var(--color-text-primary);margin:.5rem 0">最終得分：'+total+' 分</div>'+
+    '<p>'+msg+'</p>'+
+    '<p style="font-size:12px;color:var(--color-text-secondary)">點上方圓點可回頭複習任意關卡，答得更好分數會自動更新。</p>'+
+    '<div class="cb" style="text-align:left;margin:1rem 0">'+
+'<span class="cm">from bs4 import BeautifulSoup\nimport requests\n</span>\n'+
+'res   = requests.get(<span class="v">\'https://example.com\'</span>)\n'+
+'soup  = BeautifulSoup(res.text, <span class="v">\'html.parser\'</span>)\n\n'+
+'title = soup.find(<span class="v">\'h1\'</span>).text\n'+
+'links = [a[<span class="v">\'href\'</span>] <span class="a">for</span> a <span class="a">in</span> soup.find_all(<span class="v">\'a\'</span>)]\n'+
+'price = soup.find(id=<span class="v">\'price\'</span>).text\n'+
+'cards = soup.find_all(class_=<span class="v">\'card\'</span>)'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+
+      '<button class="btn" onclick="restartAll()">重新開始</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function restartAll(){G={cur:0,score:0,best:[0,0,0,0,0,0,0,0],done:[false,false,false,false,false,false,false,false]};updateNav();show(0);}
+
+updateNav();show(0);
+</script>
