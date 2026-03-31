@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>★ C++ 星星三角形闖關</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+<!-- CodeMirror -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #202d42;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --gold: #fbbf24;
+    --green: #34d399;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --border: #1e2d45;
+    --border2: #2a3f5f;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid bg */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 40px 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .logo-icon { font-size: 22px; line-height: 1; }
+  .logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo-text span { color: var(--accent); }
+
+  .progress-strip {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .dot {
+    width: 26px; height: 8px;
+    border-radius: 4px;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    transition: background .3s, border .3s;
+    cursor: pointer;
+  }
+  .dot.done { background: var(--green); border-color: var(--green); }
+  .dot.active { background: var(--accent); border-color: var(--accent); }
+
+  /* ── Level nav ── */
+  .level-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .level-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+  }
+  .level-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .level-btn.active { background: var(--accent); border-color: var(--accent); color: #0a0e1a; font-weight: 600; }
+  .level-btn.done { border-color: var(--green); color: var(--green); }
+  .level-btn.done::after {
+    content: '✓';
+    margin-left: 4px;
+    font-size: 11px;
+  }
+
+  /* ── Main layout ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .panel-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .badge-fixed { background: rgba(56,189,248,0.12); color: var(--accent); border: 1px solid rgba(56,189,248,0.25); }
+  .badge-hidden { background: rgba(129,140,248,0.12); color: var(--accent2); border: 1px solid rgba(129,140,248,0.25); }
+
+  /* ── Level info ── */
+  .level-info { padding: 16px 18px; }
+
+  .level-number {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .level-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .level-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin-bottom: 14px;
+  }
+
+  .expected-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .expected-output {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    white-space: pre;
+    line-height: 1.7;
+    font-variant-ligatures: none;
+    -webkit-font-feature-settings: "liga" 0;
+    font-feature-settings: "liga" 0;
+  }
+
+  .testcases-info {
+    background: rgba(129,140,248,0.07);
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+  .testcases-info strong { color: var(--text); }
+
+  .hint {
+    margin-top: 14px;
+    background: rgba(251,191,36,0.07);
+    border-left: 3px solid var(--gold);
+    padding: 9px 12px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: #e2c97e;
+    line-height: 1.6;
+  }
+
+  /* ── CodeMirror overrides ── */
+  .CodeMirror {
+    height: auto;
+    min-height: 260px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    background: var(--bg) !important;
+    color: var(--text);
+    border: none;
+  }
+  .CodeMirror-scroll { min-height: 260px; }
+  .CodeMirror-gutters { background: var(--surface2) !important; border-right: 1px solid var(--border) !important; }
+  .CodeMirror-linenumber { color: var(--text3) !important; }
+  .CodeMirror-cursor { border-left-color: var(--accent) !important; }
+  .CodeMirror-selected { background: rgba(56,189,248,0.15) !important; }
+  .CodeMirror-focused .CodeMirror-selected { background: rgba(56,189,248,0.2) !important; }
+
+  /* ── Student name bar ── */
+  .student-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .student-bar label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  .student-bar input[type=text] {
+    flex: 1; min-width: 80px; max-width: 120px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+  }
+  .student-bar input[type=text]:focus { border-color: var(--accent); }
+  .student-bar input[type=text]::placeholder { color: var(--text3); }
+  .sheet-status { font-size: 12px; color: var(--text3); margin-left: auto; }
+  .sheet-status.ok { color: var(--green); }
+  .sheet-status.err { color: var(--red); }
+
+  .editor-toolbar {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .lang-tag { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+  .clear-btn {
+    font-size: 11px;
+    color: var(--text3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--sans);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color .2s;
+  }
+  .clear-btn:hover { color: var(--red); }
+
+  /* ── Code editor ── */
+  .editor-wrap { flex: 1; display: flex; flex-direction: column; }
+
+  .run-area {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .run-btn {
+    padding: 9px 24px;
+    background: var(--accent);
+    color: #0a0e1a;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .run-btn:hover { background: #7dd3fc; transform: translateY(-1px); }
+  .run-btn:active { transform: translateY(0); }
+  .run-btn:disabled { background: var(--surface3); color: var(--text3); cursor: not-allowed; transform: none; }
+
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #0a0e1a;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-text { font-size: 13px; color: var(--text3); }
+
+  /* ── Result panel ── */
+  .result-panel {
+    margin-top: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .result-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .result-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); }
+
+  .verdict {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 3px 12px;
+    border-radius: 12px;
+    transition: all .3s;
+  }
+  .verdict.pass { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .verdict.fail { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+  .verdict.running { background: rgba(56,189,248,0.12); color: var(--accent); border: 1px solid rgba(56,189,248,0.3); }
+  .verdict.idle { background: var(--surface3); color: var(--text3); border: 1px solid var(--border2); }
+
+  .result-body { padding: 16px 18px; }
+
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 500px) { .diff-grid { grid-template-columns: 1fr; } }
+
+  .diff-col-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text3);
+    margin-bottom: 5px;
+  }
+  .diff-col-content {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: pre;
+    line-height: 1.7;
+    min-height: 60px;
+    color: var(--text);
+    word-break: break-all;
+    overflow-wrap: break-word;
+  }
+  .diff-col-content.match { border-color: rgba(52,211,153,0.35); color: var(--green); }
+  .diff-col-content.mismatch { border-color: rgba(248,113,113,0.3); }
+
+  .compile-error {
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.25);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--red);
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.6;
+  }
+
+  /* testcase tabs for level 2 */
+  .tc-tabs {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .tc-tab {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 12px;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tc-tab.active { background: var(--surface3); border-color: var(--accent); color: var(--accent); }
+  .tc-tab.pass { border-color: var(--green); color: var(--green); background: rgba(52,211,153,0.07); }
+  .tc-tab.fail { border-color: var(--red); color: var(--red); background: rgba(248,113,113,0.07); }
+
+  /* pass animation */
+  @keyframes celebrate {
+    0%,100% { transform: scale(1); }
+    40% { transform: scale(1.03); }
+    70% { transform: scale(0.98); }
+  }
+  .celebrating { animation: celebrate .5s ease; }
+
+  /* level complete banner */
+  .level-complete {
+    display: none;
+    background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(56,189,248,0.1));
+    border: 1px solid rgba(52,211,153,0.3);
+    border-radius: 10px;
+    padding: 18px 22px;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .level-complete.show { display: block; }
+  .lc-title { font-size: 20px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+  .lc-sub { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
+  .next-btn {
+    padding: 9px 28px;
+    background: var(--green);
+    color: #0a0e1a;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .next-btn:hover { background: #6ee7b7; }
+
+  /* ── All clear ── */
+  #all-clear {
+    display: none;
+    text-align: center;
+    padding: 80px 20px;
+  }
+  #all-clear.show { display: block; }
+  .ac-star { font-size: 60px; margin-bottom: 16px; animation: spin 8s linear infinite; }
+  .ac-title { font-size: 32px; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+  .ac-sub { font-size: 15px; color: var(--text2); }
+
+  /* api notice */
+  .api-notice {
+    background: rgba(129,140,248,0.07);
+    border: 1px solid rgba(129,140,248,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--accent2);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">★</div>
+      <div class="logo-text">C++ 星星三角形<span>闖關</span></div>
+    </div>
+    <div class="progress-strip" id="progress-strip"></div>
+  </header>
+
+  <!-- API Key Setup Banner -->
+  <div id="key-banner" style="margin-bottom:20px;">
+    <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:12px;font-weight:600;color:#fbbf24;margin-bottom:3px;letter-spacing:0.05em;">⚙ 評測伺服器設定</div>
+        <div id="key-status-text" style="font-size:12px;color:var(--text2);line-height:1.5;">目前使用<strong style="color:var(--text)">公開免費伺服器</strong>，多人同時使用可能遇到限流。課堂使用建議填入 RapidAPI Key。</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <input type="password" id="api-key-input" placeholder="貼上 RapidAPI Key..." style="width:220px;font-family:var(--mono);font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);outline:none;" />
+        <button onclick="saveKey()" style="padding:7px 16px;background:var(--gold);color:#0a0e1a;border:none;border-radius:7px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">套用</button>
+        <button onclick="clearKey()" id="clear-key-btn" style="display:none;padding:7px 12px;background:transparent;border:1px solid var(--border2);border-radius:7px;font-family:var(--sans);font-size:12px;color:var(--text2);cursor:pointer;">清除</button>
+      </div>
+    </div>
+    <div id="key-help" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:0 0 10px 10px;border-top:none;padding:12px 18px;font-size:12px;color:var(--text2);line-height:1.8;">
+      📋 <strong style="color:var(--text)">如何取得 RapidAPI Key（約 5 分鐘，每月 $10 美元）：</strong><br>
+      1. 前往 <a href="https://rapidapi.com" target="_blank" style="color:var(--accent);">rapidapi.com</a> → 右上角 Sign Up 免費註冊<br>
+      2. 搜尋 <strong style="color:var(--text)">Judge0 CE</strong>（選 judge0-official 官方版本）<br>
+      3. 點 <strong style="color:var(--text)">Pricing</strong> → 選 <strong style="color:var(--text)">Basic Plan</strong>（每月約 $10，可承載課堂用量）→ 輸入信用卡<br>
+      4. 訂閱後進入 <strong style="color:var(--text)">Endpoints</strong> 頁面，在右側 Header 區域找到 <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">X-RapidAPI-Key</code> 的值<br>
+      5. 複製那串長字串，貼回這裡按「套用」即可
+    </div>
+  </div>
+
+  <div class="level-nav" id="level-nav"></div>
+
+  <div id="challenge-area">
+    <!-- Student info bar -->
+    <div class="student-bar">
+      <label>班級</label>
+      <input type="text" id="s-class" placeholder="例：303" maxlength="10">
+      <label>座號</label>
+      <input type="text" id="s-num" placeholder="例：12" maxlength="4" style="max-width:70px;">
+      <label>姓名</label>
+      <input type="text" id="s-name" placeholder="你的姓名" maxlength="20">
+      <span class="sheet-status" id="sheet-status"></span>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left: level info -->
+      <div class="panel" id="info-panel">
+        <div class="panel-header">
+          <span class="panel-title">關卡說明</span>
+          <span class="panel-badge" id="type-badge"></span>
+        </div>
+        <div class="level-info" id="level-info-body"></div>
+      </div>
+
+      <!-- Right: editor -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">程式碼編輯器</span>
+        </div>
+        <div class="editor-wrap">
+          <div class="editor-toolbar">
+            <span class="lang-tag">C++17</span>
+            <button class="clear-btn" onclick="clearCode()">清空</button>
+          </div>
+          <div id="cm-editor"></div>
+          <div class="run-area">
+            <button class="run-btn" id="run-btn" onclick="runCode()">
+              <span>▶ 執行</span>
+              <div class="spinner" id="spinner"></div>
+            </button>
+            <span class="status-text" id="status-text">按下執行以評測</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-panel" id="result-panel">
+      <div class="result-header">
+        <span class="result-title">評測結果</span>
+        <span class="verdict idle" id="verdict-badge">等待執行</span>
+      </div>
+      <div class="result-body" id="result-body">
+        <p style="font-size:13px;color:var(--text3);">執行程式碼後，結果將顯示在這裡。</p>
+      </div>
+    </div>
+
+    <div class="level-complete" id="level-complete">
+      <div class="lc-title">🎉 過關！</div>
+      <div class="lc-sub" id="lc-sub-text"></div>
+      <button class="next-btn" id="next-btn" onclick="goNextLevel()">下一關 →</button>
+    </div>
+  </div>
+
+  <div id="all-clear">
+    <div class="ac-star">★</div>
+    <div class="ac-title">全部完成！</div>
+    <div class="ac-sub">恭喜你！十關全數通過，你已精通 C++ 多重迴圈星星三角形！</div>
+  </div>
+
+</div>
+
+<script>
+// ─── Level definitions ───────────────────────────────────────────────────────
+const genLeftTri = n => Array.from({length:n},(_,i)=>'*'.repeat(i+1)).join('\n');
+const genRightTri = n => Array.from({length:n},(_,i)=>' '.repeat(n-1-i)+'*'.repeat(i+1)).join('\n');
+const genInvLeftTri = n => Array.from({length:n},(_,i)=>'*'.repeat(n-i)).join('\n');
+const genInvRightTri = n => Array.from({length:n},(_,i)=>' '.repeat(i)+'*'.repeat(n-i)).join('\n');
+const genDiamond = n => {
+  const rows=[];
+  for(let i=1;i<=n;i++) rows.push(' '.repeat(n-i)+'*'.repeat(2*i-1));
+  for(let i=n-1;i>=1;i--) rows.push(' '.repeat(n-i)+'*'.repeat(2*i-1));
+  return rows.join('\n');
+};
+const genHourglass = n => {
+  const rows=[];
+  for(let i=n;i>=1;i--) rows.push(' '.repeat(n-i)+'*'.repeat(2*i-1));
+  for(let i=2;i<=n;i++) rows.push(' '.repeat(n-i)+'*'.repeat(2*i-1));
+  return rows.join('\n');
+};
+const genHollowTri = n => {
+  const rows=[];
+  for(let i=1;i<=n;i++){
+    if(i===1) rows.push('*');
+    else if(i===n) rows.push('*'.repeat(n));
+    else rows.push('*'+' '.repeat(i-2)+'*');
+  }
+  return rows.join('\n');
+};
+const genDoubleStair = n => {
+  const rows=[];
+  for(let i=1;i<=n;i++) rows.push('*'.repeat(i)+' '.repeat(n-i)+'*'.repeat(i));
+  return rows.join('\n');
+};
+const genZigzag = n => {
+  const rows=[];
+  for(let i=0;i<n;i++){
+    if(i%2===0) rows.push('*'.repeat(i+1));
+    else rows.push(' '.repeat(n-i-1)+'*'.repeat(i+1));
+  }
+  return rows.join('\n');
+};
+const genBowTie = n => {
+  const rows=[];
+  for(let i=n;i>=1;i--) rows.push('*'.repeat(i)+' '.repeat(2*(n-i))+'*'.repeat(i));
+  for(let i=2;i<=n;i++) rows.push('*'.repeat(i)+' '.repeat(2*(n-i))+'*'.repeat(i));
+  return rows.join('\n');
+};
+
+const LEVELS = [
+  // 1 固定型
+  {
+    id:1, type:'fixed', name:'左對齊直角三角形',
+    desc:'撰寫一段 C++ 程式，使用多重迴圈，輸出固定 5 層的左對齊星星三角形。',
+    expected: genLeftTri(5),
+    hint:'外層迴圈控制列數（1～5），內層迴圈控制每列印幾顆 *。',
+  },
+  // 2 隱藏測資型
+  {
+    id:2, type:'hidden', name:'可變層數的左對齊三角形',
+    desc:'讀取一個正整數 N，輸出 N 層的左對齊星星三角形。評測系統將以 5 筆隱藏測資驗證你的程式。',
+    hint:'用 cin 讀入 N，再將外層迴圈上限設為 N。',
+    testcases:[
+      {input:'3\n', expected:genLeftTri(3)},
+      {input:'5\n', expected:genLeftTri(5)},
+      {input:'1\n', expected:genLeftTri(1)},
+      {input:'7\n', expected:genLeftTri(7)},
+      {input:'10\n', expected:genLeftTri(10)},
+    ]
+  },
+  // 3 固定型
+  {
+    id:3, type:'fixed', name:'右對齊直角三角形',
+    desc:'輸出固定 5 層的右對齊星星三角形（用空格填補左側）。',
+    expected: genRightTri(5),
+    hint:'每列先印 (5−i) 個空格，再印 i 顆 *。',
+  },
+  // 4 隱藏測資型
+  {
+    id:4, type:'hidden', name:'可變層數的右對齊三角形',
+    desc:'讀取正整數 N，輸出 N 層的右對齊星星三角形。',
+    hint:'每列先印 (N−i) 個空格，再印 i 顆 *。',
+    testcases:[
+      {input:'3\n', expected:genRightTri(3)},
+      {input:'5\n', expected:genRightTri(5)},
+      {input:'1\n', expected:genRightTri(1)},
+      {input:'6\n', expected:genRightTri(6)},
+      {input:'8\n', expected:genRightTri(8)},
+    ]
+  },
+  // 5 固定型
+  {
+    id:5, type:'fixed', name:'倒左對齊三角形',
+    desc:'輸出固定 5 層的倒置左對齊三角形（第一列五顆 *，依序遞減）。',
+    expected: genInvLeftTri(5),
+    hint:'外層迴圈從 N 遞減到 1，內層印對應數量的 *。',
+  },
+  // 6 隱藏測資型
+  {
+    id:6, type:'hidden', name:'可變層數的倒左對齊三角形',
+    desc:'讀取正整數 N，輸出 N 層的倒置左對齊三角形。',
+    hint:'外層從 N 跑到 1，內層印 i 顆 *。',
+    testcases:[
+      {input:'4\n', expected:genInvLeftTri(4)},
+      {input:'5\n', expected:genInvLeftTri(5)},
+      {input:'1\n', expected:genInvLeftTri(1)},
+      {input:'6\n', expected:genInvLeftTri(6)},
+      {input:'9\n', expected:genInvLeftTri(9)},
+    ]
+  },
+  // 7 固定型
+  {
+    id:7, type:'fixed', name:'菱形',
+    desc:'輸出寬度為 5 層的菱形（上半部 5 列，下半部 4 列）。',
+    expected: genDiamond(5),
+    hint:'上半先填空格再填奇數顆 *；下半反向。',
+  },
+  // 8 隱藏測資型
+  {
+    id:8, type:'hidden', name:'可變大小的菱形',
+    desc:'讀取正整數 N，輸出大小為 N 的菱形。',
+    hint:'上半：空格 (N−i) 個，星星 (2i−1) 顆；下半反向。',
+    testcases:[
+      {input:'3\n', expected:genDiamond(3)},
+      {input:'5\n', expected:genDiamond(5)},
+      {input:'1\n', expected:genDiamond(1)},
+      {input:'4\n', expected:genDiamond(4)},
+      {input:'7\n', expected:genDiamond(7)},
+    ]
+  },
+  // 9 固定型
+  {
+    id:9, type:'fixed', name:'空心三角形',
+    desc:'輸出固定 6 層的空心三角形（只有邊框有 *，內部是空格）。',
+    expected: genHollowTri(6),
+    hint:'第一列只有一顆 *；最後一列全是 *；中間列只印兩端的 *，中間補空格。',
+  },
+  // 10 隱藏測資型
+  {
+    id:10, type:'hidden', name:'可變大小的空心三角形',
+    desc:'讀取正整數 N（N ≥ 2），輸出 N 層的空心三角形。',
+    hint:'i=1：一顆 *；i=N：N 顆 *；其他：兩端各一顆 *，中間 (i−2) 個空格。',
+    testcases:[
+      {input:'4\n', expected:genHollowTri(4)},
+      {input:'6\n', expected:genHollowTri(6)},
+      {input:'2\n', expected:genHollowTri(2)},
+      {input:'5\n', expected:genHollowTri(5)},
+      {input:'8\n', expected:genHollowTri(8)},
+    ]
+  },
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentLevel = 0;
+let passed = new Array(LEVELS.length).fill(false);
+let tcResults = [];
+
+// ─── Init UI ─────────────────────────────────────────────────────────────────
+function buildNav(){
+  const nav = document.getElementById('level-nav');
+  const strip = document.getElementById('progress-strip');
+  nav.innerHTML=''; strip.innerHTML='';
+  LEVELS.forEach((lv,i)=>{
+    const btn = document.createElement('button');
+    btn.className='level-btn'+(i===currentLevel?' active':'')+(passed[i]?' done':'');
+    btn.textContent=`第 ${lv.id} 關`;
+    btn.onclick=()=>goLevel(i);
+    nav.appendChild(btn);
+
+    const dot = document.createElement('div');
+    dot.className='dot'+(passed[i]?'done':i===currentLevel?' active':'');
+    dot.onclick=()=>goLevel(i);
+    strip.appendChild(dot);
+  });
+}
+
+function buildLevelInfo(){
+  const lv = LEVELS[currentLevel];
+  document.getElementById('type-badge').className='panel-badge '+(lv.type==='fixed'?'badge-fixed':'badge-hidden');
+  document.getElementById('type-badge').textContent=lv.type==='fixed'?'唯一結果型':'隱藏測資型';
+
+  let html=`<div class="level-number">第 ${lv.id} 關 / ${LEVELS.length} 關</div>
+<div class="level-name">${lv.name}</div>
+<div class="level-desc">${lv.desc}</div>`;
+
+  if(lv.type==='fixed'){
+    html+=`<div class="expected-label">目標輸出</div>
+<div class="expected-output" id="expected-output-box"></div>`;
+  } else {
+    html+=`<div class="expected-label">輸入格式</div>
+<div style="margin-bottom:10px;font-size:13px;color:var(--text2);background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-family:var(--mono)">一個正整數 N</div>
+<div class="testcases-info">本關共有 <strong>5 筆隱藏測資</strong>，評測系統將以不同的 N 值測試你的程式，全部通過才算過關。</div>`;
+  }
+
+  html+=`<div class="hint">💡 提示：${lv.hint}</div>`;
+  document.getElementById('level-info-body').innerHTML=html;
+
+  // 用 textContent 設定星號內容，避免瀏覽器 ligature 造成對齊錯誤
+  if(lv.type==='fixed'){
+    const box = document.getElementById('expected-output-box');
+    if(box) box.textContent = lv.expected;
+  }
+}
+
+function goLevel(i){
+  currentLevel=i;
+  passed[i]; // keep
+  resetResult();
+  buildNav();
+  buildLevelInfo();
+  document.getElementById('level-complete').classList.remove('show');
+  const allClear=document.getElementById('all-clear');
+  allClear.classList.remove('show');
+  document.getElementById('challenge-area').style.display='block';
+}
+
+function resetResult(){
+  document.getElementById('verdict-badge').className='verdict idle';
+  document.getElementById('verdict-badge').textContent='等待執行';
+  document.getElementById('result-body').innerHTML='<p style="font-size:13px;color:var(--text3);">執行程式碼後，結果將顯示在這裡。</p>';
+  document.getElementById('status-text').textContent='按下執行以評測';
+  tcResults=[];
+}
+
+function clearCode(){ if(cmEditor) cmEditor.setValue(''); }
+
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ─── API Key Management ───────────────────────────────────────────────────────
+const JUDGE0_RAPID = 'https://judge0-ce.p.rapidapi.com';
+const JUDGE0_FREE  = 'https://ce.judge0.com';
+const KEY_STORAGE  = 'judge0_rapidapi_key';
+
+let _apiKey = localStorage.getItem(KEY_STORAGE) || '';
+
+function saveKey(){
+  const val = document.getElementById('api-key-input').value.trim();
+  if(!val){ alert('請貼上 Key 後再按套用'); return; }
+  _apiKey = val;
+  localStorage.setItem(KEY_STORAGE, val);
+  document.getElementById('api-key-input').value='';
+  updateKeyUI();
+}
+function clearKey(){
+  _apiKey='';
+  localStorage.removeItem(KEY_STORAGE);
+  document.getElementById('api-key-input').value='';
+  updateKeyUI();
+}
+function updateKeyUI(){
+  const statusEl = document.getElementById('key-status-text');
+  const clearBtn = document.getElementById('clear-key-btn');
+  const helpEl   = document.getElementById('key-help');
+  if(_apiKey){
+    const preview = _apiKey.slice(0,6)+'...'+_apiKey.slice(-4);
+    statusEl.innerHTML=`✅ 已套用 RapidAPI Key <code style="background:var(--bg);padding:1px 6px;border-radius:3px;font-size:11px;">${preview}</code>，將使用付費伺服器，支援課堂多人同時使用。`;
+    clearBtn.style.display='block';
+    helpEl.style.display='none';
+  } else {
+    statusEl.innerHTML=`目前使用<strong style="color:var(--text)">公開免費伺服器</strong>，多人同時使用可能遇到限流。課堂使用建議填入 RapidAPI Key。 <a href="#" onclick="toggleHelp(event)" style="color:var(--accent);font-size:11px;">如何取得？</a>`;
+    clearBtn.style.display='none';
+  }
+}
+function toggleHelp(e){
+  e.preventDefault();
+  const el=document.getElementById('key-help');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+// Init key UI on load
+setTimeout(updateKeyUI, 0);
+if(_apiKey){ document.getElementById('api-key-input').value=''; }
+
+// ─── Judge0 API ───────────────────────────────────────────────────────────────
+// 請求間隔（使用 RapidAPI 付費版時降低延遲；公開版需拉長避免限流）
+const delay = ms => new Promise(r=>setTimeout(r,ms));
+
+async function submitCode(source, stdin=''){
+  const useRapid = !!_apiKey;
+  const base = useRapid ? JUDGE0_RAPID : JUDGE0_FREE;
+  const headers = {'Content-Type':'application/json'};
+  if(useRapid){
+    headers['X-RapidAPI-Key'] = _apiKey;
+    headers['X-RapidAPI-Host'] = 'judge0-ce.p.rapidapi.com';
+  }
+  const body = {
+    source_code: source,
+    language_id: 54,
+    stdin: stdin,
+    cpu_time_limit: 5,
+    wall_time_limit: 10,
+  };
+
+  // 送出後非同步輪詢（避免 wait=true 在某些情況下 timeout）
+  const submitRes = await fetch(`${base}/submissions?base64_encoded=false`, {
+    method:'POST', headers, body: JSON.stringify(body)
+  });
+  if(!submitRes.ok){
+    const errText = await submitRes.text().catch(()=>'');
+    if(submitRes.status===429) throw new Error('429：請求過於頻繁（Rate Limit）。請稍後再試，或設定 RapidAPI Key 以使用付費伺服器。');
+    throw new Error(`HTTP ${submitRes.status} ${errText}`);
+  }
+  const {token} = await submitRes.json();
+
+  // 輪詢結果（最多等 15 秒）
+  for(let i=0;i<30;i++){
+    await delay(useRapid ? 600 : 1000);
+    const pollRes = await fetch(`${base}/submissions/${token}?base64_encoded=false`, {headers});
+    if(!pollRes.ok) throw new Error(`輪詢失敗 HTTP ${pollRes.status}`);
+    const data = await pollRes.json();
+    // status id: 1=In Queue, 2=Processing, 3+=Done
+    if(data.status && data.status.id >= 3) return data;
+  }
+  throw new Error('評測逾時，請再試一次。');
+}
+
+function normalize(s){ return (s||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n').trimEnd(); }
+
+// ─── Run ─────────────────────────────────────────────────────────────────────
+async function runCode(){
+  const code = (cmEditor ? cmEditor.getValue() : '').trim();
+  if(!code){ alert('請先輸入程式碼！'); return; }
+
+  const lv = LEVELS[currentLevel];
+  const btn = document.getElementById('run-btn');
+  const spinner = document.getElementById('spinner');
+  const statusEl = document.getElementById('status-text');
+  const verdictEl = document.getElementById('verdict-badge');
+  const resultBody = document.getElementById('result-body');
+  const completeEl = document.getElementById('level-complete');
+
+  btn.disabled=true;
+  spinner.style.display='block';
+  statusEl.textContent='編譯中...';
+  verdictEl.className='verdict running';
+  verdictEl.textContent='執行中';
+  resultBody.innerHTML='';
+  completeEl.classList.remove('show');
+
+  try {
+    if(lv.type==='fixed'){
+      statusEl.textContent='執行中...';
+      const result = await submitCode(code, '');
+      renderFixedResult(result, lv.expected, resultBody, verdictEl, completeEl, lv);
+    } else {
+      tcResults = new Array(lv.testcases.length).fill(null);
+      let html='<div class="tc-tabs" id="tc-tabs">';
+      lv.testcases.forEach((_,i)=>{
+        html+=`<button class="tc-tab active" id="tc-tab-${i}" onclick="showTC(${i})">測資 #${i+1}</button>`;
+      });
+      html+='</div><div id="tc-content"></div>';
+      resultBody.innerHTML=html;
+
+      for(let i=0;i<lv.testcases.length;i++){
+        statusEl.textContent=`執行測資 ${i+1}/${lv.testcases.length}...`;
+        if(i>0) await delay(_apiKey ? 400 : 1500); // 付費版較短；公開版拉長間隔
+        const tc = lv.testcases[i];
+        const result = await submitCode(code, tc.input);
+        const got = normalize(result.stdout||'');
+        const exp = normalize(tc.expected);
+        const ok = !result.compile_output && !result.stderr && got===exp;
+        tcResults[i]={result,ok,got,exp,tc};
+        const tab=document.getElementById(`tc-tab-${i}`);
+        if(tab) tab.className='tc-tab '+(ok?'pass':'fail');
+      }
+      showTC(0);
+      const allPass = tcResults.every(r=>r&&r.ok);
+      verdictEl.className='verdict '+(allPass?'pass':'fail');
+      verdictEl.textContent=allPass?'全部通過 ✓':`未完全通過 (${tcResults.filter(r=>r&&r.ok).length}/${lv.testcases.length})`;
+      if(allPass) markPassed(completeEl, lv);
+    }
+  } catch(e) {
+    verdictEl.className='verdict fail';
+    verdictEl.textContent='執行錯誤';
+    resultBody.innerHTML=`<div class="compile-error">無法連線至評測伺服器：${e.message}\n\n請確認網路連線，或稍後再試。</div>`;
+  }
+
+  btn.disabled=false;
+  spinner.style.display='none';
+  statusEl.textContent='評測完成';
+}
+
+function renderFixedResult(result, expected, body, verdictEl, completeEl, lv){
+  const ce = result.compile_output;
+  const stderr = result.stderr;
+  if(ce||stderr){
+    verdictEl.className='verdict fail';
+    verdictEl.textContent='編譯錯誤';
+    body.innerHTML=`<div style="font-size:13px;color:var(--red);margin-bottom:8px;font-weight:600;">編譯失敗</div><div class="compile-error">${escHtml(ce||stderr)}</div>`;
+    return;
+  }
+  const got = normalize(result.stdout||'');
+  const exp = normalize(expected);
+  const ok = got===exp;
+  verdictEl.className='verdict '+(ok?'pass':'fail');
+  verdictEl.textContent=ok?'通過 ✓':'結果不符 ✗';
+  body.innerHTML=`<div class="diff-grid">
+    <div><div class="diff-col-label">你的輸出</div><div class="diff-col-content ${ok?'match':'mismatch'}">${escHtml(got)||'（無輸出）'}</div></div>
+    <div><div class="diff-col-label">期望輸出</div><div class="diff-col-content match">${escHtml(exp)}</div></div>
+  </div>`;
+  if(ok) markPassed(completeEl, lv);
+}
+
+function showTC(i){
+  if(!tcResults[i]) return;
+  document.querySelectorAll('.tc-tab').forEach((t,j)=>{
+    if(!t.classList.contains('pass')&&!t.classList.contains('fail'))
+      t.classList.toggle('active', j===i);
+    else t.classList.toggle('active', j===i);
+  });
+  const r = tcResults[i];
+  const tc = r.tc;
+  const ce = r.result.compile_output;
+  const stderr = r.result.stderr;
+  let html='';
+  if(ce||stderr){
+    html=`<div style="font-size:13px;color:var(--red);margin-bottom:8px;">測資 #${i+1}：編譯錯誤</div><div class="compile-error">${escHtml(ce||stderr)}</div>`;
+  } else {
+    const inputDisplay = tc.input.replace(/\n$/,'');
+    html=`<div style="margin-bottom:10px;">
+      <div class="diff-col-label" style="margin-bottom:4px;">輸入值</div>
+      <div class="diff-col-content" style="min-height:auto;padding:8px 12px;">${escHtml(inputDisplay)}</div>
+    </div>
+    <div class="diff-grid">
+      <div><div class="diff-col-label">你的輸出</div><div class="diff-col-content ${r.ok?'match':'mismatch'}">${escHtml(r.got)||'（無輸出）'}</div></div>
+      <div><div class="diff-col-label">期望輸出</div><div class="diff-col-content match">${escHtml(r.exp)}</div></div>
+    </div>`;
+  }
+  document.getElementById('tc-content').innerHTML=html;
+}
+
+function markPassed(completeEl, lv){
+  passed[currentLevel]=true;
+  buildNav();
+  completeEl.classList.add('show');
+  completeEl.classList.add('celebrating');
+  setTimeout(()=>completeEl.classList.remove('celebrating'),600);
+  document.getElementById('lc-sub-text').textContent=`第 ${lv.id} 關「${lv.name}」已通過！`;
+  sendToSheet(true); // 上傳通過成績到 Google Sheet
+  const nextBtn=document.getElementById('next-btn');
+  if(currentLevel===LEVELS.length-1){
+    nextBtn.textContent='查看完成畫面 🎉';
+    nextBtn.onclick=showAllClear;
+  } else {
+    nextBtn.textContent=`前往第 ${LEVELS[currentLevel+1].id} 關 →`;
+    nextBtn.onclick=goNextLevel;
+  }
+}
+
+function goNextLevel(){
+  if(currentLevel<LEVELS.length-1) goLevel(currentLevel+1);
+}
+
+function showAllClear(){
+  document.getElementById('challenge-area').style.display='none';
+  const ac=document.getElementById('all-clear');
+  ac.classList.add('show');
+}
+
+// ─── Google Sheet ─────────────────────────────────────────────────────────────
+// 將下方 APPS_SCRIPT_URL 換成你的 Google Apps Script Web App 網址
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCYymzJmJUOK01cbA7GzMEMtK7fAuA4Qaa7c2cdwoPkeD8eB5oUTi4F_8FQjeMjuc6/exec'; // 例：'https://script.google.com/macros/s/XXXXXX/exec'
+
+async function sendToSheet(isPass){
+  if(!APPS_SCRIPT_URL) return;
+  const cls  = document.getElementById('s-class').value.trim();
+  const num  = document.getElementById('s-num').value.trim();
+  const name = document.getElementById('s-name').value.trim();
+  if(!name) return;
+  const lv = LEVELS[currentLevel];
+  const statusEl = document.getElementById('sheet-status');
+  statusEl.className='sheet-status';
+  statusEl.textContent='上傳成績中...';
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        班級: cls, 座號: num, 姓名: name,
+        關卡: `第${lv.id}關 ${lv.name}`,
+        時間: new Date().toLocaleString('zh-TW'),
+        是否通過: isPass ? '✓ 通過' : '✗ 未通過'
+      })
+    });
+    statusEl.className='sheet-status ok';
+    statusEl.textContent='✓ 成績已上傳';
+    setTimeout(()=>{ statusEl.textContent=''; statusEl.className='sheet-status'; }, 4000);
+  } catch(e){
+    statusEl.className='sheet-status err';
+    statusEl.textContent='✗ 上傳失敗，請確認網路';
+  }
+}
+
+// ─── CodeMirror Editor ────────────────────────────────────────────────────────
+let cmEditor;
+function initCodeMirror(){
+  cmEditor = CodeMirror(document.getElementById('cm-editor'), {
+    mode: 'text/x-c++src',
+    theme: 'dracula',
+    lineNumbers: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: false,
+    lineWrapping: false,
+    value: '#include <iostream>\nusing namespace std;\nint main() {\n    \n}',
+    extraKeys: {
+      'Tab': cm => cm.execCommand('insertSoftTab'),
+    }
+  });
+  cmEditor.setSize('100%', null);
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+buildNav();
+buildLevelInfo();
+initCodeMirror();
+</script>
+</body>
+</html>
